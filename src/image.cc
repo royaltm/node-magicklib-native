@@ -92,6 +92,7 @@ namespace NodeMagick {
     NODE_SET_PROTOTYPE_METHOD(tpl, "histogram"  , Histogram);
     NODE_SET_PROTOTYPE_METHOD(tpl, "noise"      , Noise);
     NODE_SET_PROTOTYPE_METHOD(tpl, "properties" , Properties);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "ping"       , Ping);
     NODE_SET_PROTOTYPE_METHOD(tpl, "quality"    , Quality);
     NODE_SET_PROTOTYPE_METHOD(tpl, "quantize"   , Quantize);
     NODE_SET_PROTOTYPE_METHOD(tpl, "read"       , Read);
@@ -961,6 +962,33 @@ namespace NodeMagick {
   }
 
   /**
+   * Ping image
+   *
+   * image.ping(file|buffer[, callback(err, size)])
+   *
+   * buffer: a Buffer object to read image from (recommended)
+   * file: a file to read from (not recommended, uses Magick++ threaded I/O)
+   * size: an Array of [width, height]
+   *
+   * todo: implement async read for file
+   **/
+  NAN_METHOD(Image::Ping) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImagePingJob, pinger)
+
+    if ( argc == 1 ) {
+      if ( args[0]->IsString() ) {
+        pinger.Setup( new NanUtf8String(args[0]) );
+      } else if ( Buffer::HasInstance(args[0]) ) {
+        Local<Object> buffer( args[0]->ToObject() );
+        image->SaveObject( buffer );
+        pinger.Setup( Buffer::Data(buffer), Buffer::Length(buffer) );
+      }
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImagePingJob, pinger, "ping()'s 1st argument should be string or Buffer");
+  }
+
+  /**
    * Properties set or get
    *
    * in synchronous context:
@@ -1173,7 +1201,7 @@ namespace NodeMagick {
    * image.size(size, callback(err, image))
    * image.size(width, height, callback(err, image))
    *
-   * size: an Array or [width, height]
+   * size: an Array of [width, height]
    **/
   NAN_METHOD(Image::Size) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageSizeJob, sizer)

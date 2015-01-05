@@ -365,6 +365,40 @@ namespace NodeMagick {
     }
   }
 
+  /* ImagePingJob */
+
+  ImagePingJob::ImagePingJob() : ImageProcessJob(true) {}
+
+  void ImagePingJob::Setup(NanUtf8String *file_) {
+    file.reset(file_);
+    ImageProcessJob::Setup();
+  }
+  void ImagePingJob::Setup(char *data_, size_t length_) {
+    data = data_;
+    length = length_;
+    ImageProcessJob::Setup();
+  }
+
+  void ImagePingJob::ProcessImage(Image *image) {
+    Magick::Image mi;
+    if (data != NULL) {
+      Magick::Blob blob(data, length);
+      mi.ping(blob);
+    } else {
+      mi.ping(**file);
+    }
+    columns = mi.columns();
+    rows = mi.rows();
+  }
+
+  Local<Value> ImagePingJob::ReturnedValue() {
+    NanEscapableScope();
+    Local<Object> result( NanNew<Array>(2) );
+    result->Set( 0, NanNew<Integer>(columns) );
+    result->Set( 1, NanNew<Integer>(rows) );
+    return NanEscapeScope(result);
+  }
+
   /* ImagePropertiesJob */
 
   ImagePropertiesJob::ImagePropertiesJob() : ImageProcessJob()
@@ -493,7 +527,7 @@ namespace NodeMagick {
     file.reset(file_);
     ImageProcessJob::Setup();
   }
-  void ImageReadJob::Setup(char *data_, ssize_t length_) {
+  void ImageReadJob::Setup(char *data_, size_t length_) {
     data = data_;
     length = length_;
     ImageProcessJob::Setup();

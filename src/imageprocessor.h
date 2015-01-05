@@ -209,6 +209,19 @@ namespace NodeMagick {
       auto_ptr<NanUtf8String> channel;
   };
 
+  class ImagePingJob : public ImageProcessJob {
+    public:
+      ImagePingJob(void);
+      void Setup(NanUtf8String *file_);
+      void Setup(char *data_, size_t length_);
+      void ProcessImage(Image *image_);
+      Local<Value> ReturnedValue(void);
+    private:
+      auto_ptr<NanUtf8String> file;
+      char *data;
+      size_t length, columns, rows;
+  };
+
   class ImagePropertiesJob : public ImageProcessJob {
     friend class Image;
     public:
@@ -254,12 +267,12 @@ namespace NodeMagick {
     public:
       ImageReadJob(void);
       void Setup(NanUtf8String *file_);
-      void Setup(char *data_, ssize_t length_);
+      void Setup(char *data_, size_t length_);
       void ProcessImage(Image *image_);
     private:
       auto_ptr<NanUtf8String> file;
       char *data;
-      ssize_t length;
+      size_t length;
   };
 
   class ImageResetJob : public ImageProcessJob {

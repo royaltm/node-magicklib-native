@@ -4,7 +4,8 @@ var test = require("tap").test
   , Image = magick.Image
   , Color = magick.Color
   , blob = require('fs').readFileSync("test.transparent.png")
-  , blobResize = require('fs').readFileSync('test.image.jpg');
+  , blob160 = require('fs').readFileSync("test.transparent160.png")
+  , blobImage = require('fs').readFileSync("test.image.jpg");
 
 test("Empty Image factory", function (t) {
   var im = new Image();
@@ -169,7 +170,7 @@ test("Image from file factory", function (t) {
 })
 
 test("Image from image", function (t) {
-  var im = new Image({src: blobResize, autoClose: false})
+  var im = new Image({src: blobImage, autoClose: false})
   var im2 = new Image(im)
   t.plan(9 + 100 + 1 + 100)
   t.type(im , Image)
@@ -195,7 +196,7 @@ test("Image from image", function (t) {
 })
 
 test("Image must not be synchronously cloned during async process", function (t) {
-  var im = new Image({src: blobResize, autoCopy: true, autoClose: false})
+  var im = new Image({src: blobImage, autoCopy: true, autoClose: false})
 
   t.plan(10 + 1)
 
@@ -205,4 +206,23 @@ test("Image must not be synchronously cloned during async process", function (t)
   }, function(err) {
     t.equal(err, void(0), "no error")
   })
+})
+
+test("Ping image", function(t) {
+  var im = new Image()
+  t.ok(im.empty, "is empty")
+  t.deepEqual(im.ping(blob160), [160, 160])
+  t.ok(im.empty, "is empty")
+  t.strictEqual(im.read(blob), im)
+  t.ok(!im.empty, "not empty")
+  t.equal(im.columns, 16)
+  t.equal(im.rows, 16)
+  t.strictEqual(im.ping(blobImage, function(err, size) {
+    t.ok(err == null)
+    t.deepEqual(size, [113, 150]);
+    t.ok(!im.empty, "not empty")
+    t.equal(im.columns, 16)
+    t.equal(im.rows, 16)
+    t.end()
+  }), im)
 })
