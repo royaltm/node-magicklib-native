@@ -299,11 +299,11 @@ namespace NodeMagick {
   class ImageSharpenJob : public ImageProcessJob {
     public:
       ImageSharpenJob(void);
-      void Setup(double sigma);
-      void Setup(double sigma, double radius);
+      void Setup(double sigma_, double radius_, NanUtf8String *channel_);
       void ProcessImage(Image *image_);
     private:
       double sigma, radius;
+      auto_ptr<NanUtf8String> channel;
   };
 
   class ImageSizeJob : public ImageProcessJob {

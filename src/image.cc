@@ -493,7 +493,7 @@ namespace NodeMagick {
         channel = new NanUtf8String( options->Get(channelSym) );
       if ( options->Has(gaussianSym) )
         gaussian = options->Get(gaussianSym)->BooleanValue();
-        blur.Setup(sigma, radius, channel, gaussian);
+      blur.Setup(sigma, radius, channel, gaussian);
     } else if ( argc >= 1 && argc <= 4 ) {
       sigma = args[0]->NumberValue();
       for( uint32_t i = 1; i < argc; ++i ) {
@@ -1120,25 +1120,44 @@ namespace NodeMagick {
   /**
    * Sharpen image
    *
-   * image.sharpen(sigma[, radius=0][, callback(err, image)])
+   * image.sharpen(sigma[, radius][, channel][, callback(err, image)])
+   * image.sharpen(options[, callback(err, image)])
    *
-   * sigma: a standard deviation
-   * radius: pixel radius
+   * options:
+   *
+   *   - sigma: standard deviation of the Laplacian
+   *   - radius: the radius of the Gaussian, in pixels
+   *   - channel: channel type string, e.g.: "blue"
+   *
    **/
   NAN_METHOD(Image::Sharpen) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageSharpenJob, sharpener)
 
-    if ( argc == 2 ) {
-      if ( args[0]->IsNumber() && args[1]->IsNumber() ) {
-        sharpener.Setup(args[0]->NumberValue(), args[1]->NumberValue());
+    double sigma(0.0);
+    double radius(0.0);
+    NanUtf8String *channel(NULL);
+    if ( argc == 1 && args[0]->IsObject() ) {
+      Local<Object> options = args[0].As<Object>();
+      if ( options->Has(sigmaSym) )
+        sigma = options->Get(sigmaSym)->NumberValue();
+      if ( options->Has(radiusSym) )
+        radius = options->Get(radiusSym)->NumberValue();
+      if ( options->Has(channelSym) )
+        channel = new NanUtf8String( options->Get(channelSym) );
+      sharpener.Setup(sigma, radius, channel);
+    } else if ( argc >= 1 && argc <= 3 ) {
+      sigma = args[0]->NumberValue();
+      for( uint32_t i = 1; i < argc; ++i ) {
+        if ( args[i]->IsString() ) {
+          channel = new NanUtf8String(args[i]);
+        } else {
+          radius = args[i]->NumberValue();
+        }
       }
-    } else if ( argc == 1 ) {
-      if ( args[0]->IsNumber() ) {
-        sharpener.Setup(args[0]->NumberValue());
-      }
+      sharpener.Setup(sigma, radius, channel);
     }
 
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageSharpenJob, sharpener, "sharpen()'s arguments should be 1 or 2 Numbers");
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageSharpenJob, sharpener, "sharpen()'s arguments should be should number(s)[, string]");
   }
 
   /**

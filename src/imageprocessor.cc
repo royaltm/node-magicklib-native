@@ -568,20 +568,28 @@ namespace NodeMagick {
 
   ImageSharpenJob::ImageSharpenJob() : ImageProcessJob() {}
 
-  void ImageSharpenJob::Setup(double sigma_) {
-    sigma = sigma_;
-    radius = 0;
-    ImageProcessJob::Setup();
-  }
-
-  void ImageSharpenJob::Setup(double sigma_, double radius_) {
+  void ImageSharpenJob::Setup(double sigma_, double radius_, NanUtf8String *channel_) {
     sigma = sigma_;
     radius = radius_;
+    channel.reset(channel_);
     ImageProcessJob::Setup();
   }
 
   void ImageSharpenJob::ProcessImage(Image *image) {
-    image->GetMagickImage()->sharpen(radius, sigma);
+    NanUtf8String *channel_ = channel.get();
+    if ( channel_ != NULL ) {
+      Magick::ChannelType channelType( Magick::UndefinedChannel );
+      if ( channel_ != NULL ) {
+        ssize_t type = MagickCore::ParseCommandOption(MagickCore::MagickChannelOptions, Magick::MagickFalse, **channel_);
+        if ( type == -1 ) {
+          throw ImageChannelException();
+        }
+        channelType = (Magick::ChannelType) type;
+      }
+      image->GetMagickImage()->sharpenChannel(channelType, radius, sigma);
+    } else {
+      image->GetMagickImage()->sharpen(radius, sigma);
+    }
   }
 
   /* ImageSizeJob */
