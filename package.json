@@ -1,0 +1,37 @@
+{
+  "name": "magicklib-native",
+  "description": "NodeJS native bindings for ImageMagick's Magick++ library",
+  "keywords": [
+    "gfx",
+    "imagemagick",
+    "magick++",
+    "quantize",
+    "resize",
+    "convert"
+  ],
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": "Rafał Michalski <royal@yeondir.com>",
+  "contributors": [],
+  "homepage": "http://github.com/royaltm/node-magicklib-native",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/royaltm/node-magicklib-native.git"
+  },
+  "scripts": {
+    "test": "tap ./test/test.*.js"
+  },
+  "main": "magick.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "dependencies": {
+    "nan": "~1.3.0"
+  },
+  "devDependencies": {
+    "tap": "*",
+    "async": "*",
+    "ben": "*",
+    "colors": "*"
+  }
+}
