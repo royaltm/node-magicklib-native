@@ -69,6 +69,7 @@ namespace NodeMagick {
       static NAN_METHOD(Flop);
       static NAN_METHOD(Format);
       static NAN_METHOD(Histogram);
+      static NAN_METHOD(Negate);
       static NAN_METHOD(Noise);
       static NAN_METHOD(Normalize);
       static NAN_METHOD(Oil);

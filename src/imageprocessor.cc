@@ -24,13 +24,16 @@ namespace NodeMagick {
   void ImageProcessJob::Setup() {
     valid = true;
   }
+
   void ImageProcessJob::Setup(bool dontCopy_) {
     dontCopy = dontCopy_;
     valid = true;
   }
+
   void ImageProcessJob::ProcessImage(Image *image) {
     //printf("ImageProcessJob::ProcessImage: %p\n", image);
   }
+
   bool ImageProcessJob::HasReturnValue() { return dontCopy; }
   bool ImageProcessJob::IsValid()        { return valid; }
   bool ImageProcessJob::DontCopy()       { return dontCopy; }
@@ -299,6 +302,7 @@ namespace NodeMagick {
     format.reset(format_);
     ImageProcessJob::Setup();
   }
+
   void ImageFormatJob::ProcessImage(Image *image) {
     image->GetMagickImage()->magick( **format );
   }
@@ -331,6 +335,19 @@ namespace NodeMagick {
     return NanEscapeScope(result);
   }
 
+  /* ImageNegateJob */
+
+  ImageNegateJob::ImageNegateJob() : ImageProcessJob() {}
+
+  void ImageNegateJob::Setup(bool grayscale_) {
+    grayscale = grayscale_;
+    ImageProcessJob::Setup();
+  }
+
+  void ImageNegateJob::ProcessImage(Image *image) {
+    image->GetMagickImage()->negate(grayscale);
+  }
+
   /* ImageNoiseJob */
 
   ImageNoiseJob::ImageNoiseJob() : ImageProcessJob() {}
@@ -339,11 +356,13 @@ namespace NodeMagick {
     noise.reset(noise_);
     ImageProcessJob::Setup();
   }
+
   void ImageNoiseJob::Setup(NanUtf8String *noise_, NanUtf8String *channel_) {
     noise.reset(noise_);
     channel.reset(channel_);
     ImageProcessJob::Setup();
   }
+
   void ImageNoiseJob::ProcessImage(Image *image) {
     NanUtf8String *channel_ = channel.get();
     Magick::ChannelType channelType( Magick::UndefinedChannel );
@@ -381,6 +400,7 @@ namespace NodeMagick {
     radius = radius_;
     ImageProcessJob::Setup();
   }
+
   void ImageOilJob::ProcessImage(Image *image) {
     image->GetMagickImage()->oilPaint(radius);
   }
@@ -393,6 +413,7 @@ namespace NodeMagick {
     file.reset(file_);
     ImageProcessJob::Setup();
   }
+
   void ImagePingJob::Setup(char *data_, size_t length_) {
     data = data_;
     length = length_;

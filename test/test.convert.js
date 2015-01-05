@@ -233,6 +233,26 @@ test("image.flop", function (t) {
   });
 });
 
+test("image.negate", function (t) {
+  var im = new Image({src: blobImage, magick: "PNG", autoCopy: true, autoClose: false})
+  t.plan(2*(2 + 10*3))
+  var histogram0 = im.histogram()
+  syncAsync(im.negate.bind(im), function(err, im2) {
+    t.ok(err == null)
+    var histogram = im.histogram()
+    t.ok(histogram.length == histogram0.length)
+    for(var i = 0; i < 10; ++i) {
+      var x = (Math.random() * im2.columns)|0
+        , y = (Math.random() * im2.rows)|0
+        , c1 = im.color(x, y)
+        , c2 = im2.color(x, y)
+      t.equal(c1.r, magick.QUANTUM_RANGE - c2.r)
+      t.equal(c1.g, magick.QUANTUM_RANGE - c2.g)
+      t.equal(c1.b, magick.QUANTUM_RANGE - c2.b)
+    }
+  })
+})
+
 test("image.noise", function (t) {
   var im = new Image({src: blobImage, magick: "PNG", autoCopy: true, autoClose: false})
   t.plan(2*2*2 + 2*2*2)

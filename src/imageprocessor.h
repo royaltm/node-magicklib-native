@@ -198,6 +198,15 @@ namespace NodeMagick {
 #endif
   };
 
+  class ImageNegateJob : public ImageProcessJob {
+    public:
+      ImageNegateJob(void);
+      void Setup(bool grayscale_ = false);
+      void ProcessImage(Image *image_);
+    private:
+      bool grayscale;
+  };
+
   class ImageNoiseJob : public ImageProcessJob {
     public:
       ImageNoiseJob(void);

@@ -90,6 +90,7 @@ namespace NodeMagick {
     NODE_SET_PROTOTYPE_METHOD(tpl, "flop"       , Flop);
     NODE_SET_PROTOTYPE_METHOD(tpl, "format"     , Format);
     NODE_SET_PROTOTYPE_METHOD(tpl, "histogram"  , Histogram);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "negate"     , Negate);
     NODE_SET_PROTOTYPE_METHOD(tpl, "noise"      , Noise);
     NODE_SET_PROTOTYPE_METHOD(tpl, "normalize"  , Normalize);
     NODE_SET_PROTOTYPE_METHOD(tpl, "oil"        , Oil);
@@ -922,6 +923,23 @@ namespace NodeMagick {
     }
 
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageHistogramJob, histogramjob, "histogram()'s 1st argument should be callback");
+  }
+
+  /**
+   * Negate image
+   *
+   * image.negate([grayscale=false][, callback(err, image)])
+   **/
+  NAN_METHOD(Image::Negate) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageNegateJob, negator)
+
+    if ( argc == 0 ) {
+      negator.Setup();
+    } else if ( argc == 1 ) {
+      negator.Setup( args[0]->BooleanValue() );
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageNegateJob, negator, "negate()'s argument should be boolean");
   }
 
   /**
