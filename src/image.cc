@@ -91,6 +91,7 @@ namespace NodeMagick {
     NODE_SET_PROTOTYPE_METHOD(tpl, "format"     , Format);
     NODE_SET_PROTOTYPE_METHOD(tpl, "histogram"  , Histogram);
     NODE_SET_PROTOTYPE_METHOD(tpl, "noise"      , Noise);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "normalize"  , Normalize);
     NODE_SET_PROTOTYPE_METHOD(tpl, "properties" , Properties);
     NODE_SET_PROTOTYPE_METHOD(tpl, "ping"       , Ping);
     NODE_SET_PROTOTYPE_METHOD(tpl, "quality"    , Quality);
@@ -959,6 +960,21 @@ namespace NodeMagick {
     }
 
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageNoiseJob, noisejob, "noise()'s arguments should be strings");
+  }
+
+  /**
+   * Normalize image
+   *
+   * image.normalize([callback(err, image)])
+   **/
+  NAN_METHOD(Image::Normalize) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageNormalizeJob, normalizer)
+
+    if (argc == 0) {
+      normalizer.Setup();
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageNormalizeJob, normalizer, "normalize()'s 1st argument should be callback");
   }
 
   /**

@@ -259,6 +259,17 @@ test("image.noise", function (t) {
   });
 })
 
+test("image.normalize", function (t) {
+  var im = new Image({src: blobImage, magick: "PNG", autoCopy: true, autoClose: false})
+  t.plan(2*2)
+  var histogram0 = im.histogram()
+  syncAsync(im.normalize.bind(im), function(err, im) {
+    t.ok(err == null)
+    var histogram = im.histogram()
+    t.ok(histogram.length < histogram0.length)
+  })
+})
+
 test("image.quantize/histogram", function (t) {
   var im = new Image({src: blobImage, magick: "PNG", autoCopy: true, autoClose: false})
   t.plan(3 + 4 + 3 + 2*2*4 + 2*2*(5+16*2) + 3*2*5)

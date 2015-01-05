@@ -209,6 +209,12 @@ namespace NodeMagick {
       auto_ptr<NanUtf8String> channel;
   };
 
+  class ImageNormalizeJob : public ImageProcessJob {
+    public:
+      ImageNormalizeJob(void);
+      void ProcessImage(Image *image_);
+  };
+
   class ImagePingJob : public ImageProcessJob {
     public:
       ImagePingJob(void);

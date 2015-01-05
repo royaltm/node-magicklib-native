@@ -70,6 +70,7 @@ namespace NodeMagick {
       static NAN_METHOD(Format);
       static NAN_METHOD(Histogram);
       static NAN_METHOD(Noise);
+      static NAN_METHOD(Normalize);
       static NAN_METHOD(Ping);
       static NAN_METHOD(Properties);
       static NAN_METHOD(Quality);

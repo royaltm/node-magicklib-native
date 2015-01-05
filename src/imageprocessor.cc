@@ -365,6 +365,14 @@ namespace NodeMagick {
     }
   }
 
+  /* ImageNormalizeJob */
+
+  ImageNormalizeJob::ImageNormalizeJob() : ImageProcessJob() {}
+
+  void ImageNormalizeJob::ProcessImage(Image *image) {
+    image->GetMagickImage()->normalize();
+  }
+
   /* ImagePingJob */
 
   ImagePingJob::ImagePingJob() : ImageProcessJob(true) {}
