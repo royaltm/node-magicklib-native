@@ -65,8 +65,6 @@ Begin batch mode
   image.begin(batch)
   image.begin(options)
  
-  batch: set persistent batch mode
- 
   options:
  
     - batch: set persistent batch mode, default: false
@@ -81,8 +79,17 @@ Blur image
 
 ```js
  
-  image.blur(sigma[, callback(err, image)])
-  image.blur(sigma, radius[, callback(err, image)])
+  image.blur(sigma[, radius][, channel][, gaussian][, callback(err, image)])
+  image.blur(options[, callback(err, image)])
+ 
+  options:
+ 
+    - sigma: standard deviation of the Laplacian or the Gaussian bell curve
+    - radius: the radius of the Gaussian, in pixels or number of neighbor
+              pixels to be included in the convolution mask
+    - channel: channel type string, e.g.: "yellow"
+    - gaussian: true for gaussian blur
+ 
 ```
 
 Copy image
@@ -92,9 +99,6 @@ Copy image
   image.copy([callback(err, newimage)])
   image.copy(autoCopy[, callback(err, newimage)]) -> image
   image.copy(options[, callback(err, newimage)]) -> image
- 
- 
-  autoCopy: set auto copy mode
  
   options:
  
@@ -109,8 +113,6 @@ Close image
   image.close(autoClose) -> image
   image.close(options) -> image
   
-  autoClose: set auto close mode
- 
   options:
  
     - autoClose: set auto close mode, default: true
@@ -168,8 +170,6 @@ End batch
   image.end([callback(err, image)])
   image.end(batch[, callback(err, image)])
   image.end(options[, callback(err, image)])
- 
-  batch: set persistent batch mode
  
   options:
  
@@ -234,6 +234,56 @@ Histogram
   image.histogram([callback(err, histogram)])
 ```
 
+Negate image
+
+```js
+ 
+  image.negate([grayscale=false][, callback(err, image)])
+```
+
+Noise image
+
+```js
+ 
+  image.noise(noise[, channel][, callback(err, image)])
+  image.noise(options[, callback(err, image)])
+ 
+  options:
+ 
+    - noise: noise type string, e.g.: "multiplicative"
+    - channel: channel type string, e.g.: "matte"
+ 
+  see: http://www.imagemagick.org/Magick++/Enumerations.html#NoiseType
+       http://www.imagemagick.org/Magick++/Enumerations.html#ChannelType
+```
+
+Normalize image
+
+```js
+ 
+  image.normalize([callback(err, image)])
+```
+
+Oilpaint image
+
+```js
+ 
+  image.oil([radius=3][, callback(err, image)])
+```
+
+Ping image
+
+```js
+ 
+  image.ping(file|buffer[, callback(err, size)])
+ 
+  buffer: a Buffer object to read image from (recommended)
+  file: a file to read from (not recommended, uses Magick++ threaded I/O)
+  size: an Array of [width, height]
+ 
+  todo: implement async read for file
+```
+
 Properties set or get
 
 ```js
@@ -277,10 +327,6 @@ Quantize image
   image.quantize([colors][, colorspace][, dither][, callback(err, image)])
   image.quantize(options, callback(err, image)])
  
-  colors: a number of quantized colors
-  colorspace: a colorspace string, e.g. "gray"
-  dither: true or false
- 
   options:
  
     - colors: a number of quantized colors
@@ -308,10 +354,15 @@ Sharpen image
 
 ```js
  
-  image.sharpen(sigma[, radius=0][, callback(err, image)])
+  image.sharpen(sigma[, radius][, channel][, callback(err, image)])
+  image.sharpen(options[, callback(err, image)])
  
-  sigma: a standard deviation
-  radius: pixel radius
+  options:
+ 
+    - sigma: standard deviation of the Laplacian
+    - radius: the radius of the Gaussian, in pixels
+    - channel: channel type string, e.g.: "blue"
+ 
 ```
 
 Size get or set
@@ -328,7 +379,7 @@ Size get or set
   image.size(size, callback(err, image))
   image.size(width, height, callback(err, image))
  
-  size: an Array or [width, height]
+  size: an Array of [width, height]
 ```
 
 Read image
