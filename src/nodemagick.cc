@@ -25,6 +25,9 @@ namespace NodeMagick {
   Persistent<String> ditherSym;
   Persistent<String> noiseSym;
   Persistent<String> channelSym;
+  Persistent<String> sigmaSym;
+  Persistent<String> radiusSym;
+  Persistent<String> gaussianSym;
 
   //Persistent<Function> bufferFunction;
 
@@ -91,6 +94,9 @@ namespace NodeMagick {
     ditherSym     = NODE_PSYMBOL("dither");
     noiseSym      = NODE_PSYMBOL("noise");
     channelSym    = NODE_PSYMBOL("channel");
+    sigmaSym      = NODE_PSYMBOL("sigma");
+    radiusSym     = NODE_PSYMBOL("radius");
+    gaussianSym   = NODE_PSYMBOL("gaussian");
     // NanAssignPersistent(bufferFunction, Local<Function>::Cast(NanGetCurrentContext()->Global()->Get(NanNew<String>("Buffer"))));
     Image::Init(exports);
     Color::Init(exports);

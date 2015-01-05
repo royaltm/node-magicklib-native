@@ -42,6 +42,9 @@ namespace NodeMagick {
   extern Persistent<String> ditherSym;
   extern Persistent<String> noiseSym;
   extern Persistent<String> channelSym;
+  extern Persistent<String> sigmaSym;
+  extern Persistent<String> radiusSym;
+  extern Persistent<String> gaussianSym;
 
   //extern Persistent<Function> bufferFunction;
 

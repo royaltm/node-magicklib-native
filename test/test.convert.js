@@ -28,20 +28,55 @@ function syncAsync(method, callback) {
 
 test("image.blur", function (t) {
   var im = new Image({src: blobT160, autoCopy: true, autoClose: false})
-  t.plan(2 + 2*4 + 2*4)
+  t.plan(2 + 2*2*4 + 2*2*4 + 2*2*6 + 2*2*4)
   t.deepEqual(im.color(9,9).rgba(), [ 0, 0, 0, 1 ])
-  t.deepEqual(im.color(11,11).rgba(), [ 0, 0, 0, 0 ])
-  syncAsync(im.blur.bind(im, 1), function(err, im) {
-    t.deepEqual(im.color(9,9).rgb()         , [ 0, 0, 0 ])
-    t.equal(im.color(9,9).alpha(100)|0  , 90)
-    t.deepEqual(im.color(11,11).rgb()       , [ 0, 0, 0 ])
-    t.equal(im.color(11,11).alpha(100)|0, 12)
+  t.deepEqual(im.color(11,11).rgba(), [ 0, 0, 0, 0 ]);
+  [
+    im.blur.bind(im, 1),
+    im.blur.bind(im, {sigma: 1})
+  ].forEach(function(method) {
+    syncAsync(method, function(err, im) {
+      t.deepEqual(im.color(9,9).rgb()         , [ 0, 0, 0 ])
+      t.equal(im.color(9,9).alpha(100)|0  , 90)
+      t.deepEqual(im.color(11,11).rgb()       , [ 0, 0, 0 ])
+      t.equal(im.color(11,11).alpha(100)|0, 12)
+    })
   });
-  syncAsync(im.blur.bind(im, 1, 2), function(err, im) {
-    t.deepEqual(im.color(9,9).rgb()         , [ 0, 0, 0 ])
-    t.equal(im.color(9,9).alpha(100)|0  , 90)
-    t.deepEqual(im.color(11,11).rgb()       , [ 0, 0, 0 ])
-    t.equal(im.color(11,11).alpha(100)|0, 11)
+  [
+    im.blur.bind(im, 1, 2),
+    im.blur.bind(im, {sigma: 1, radius: 2})
+  ].forEach(function(method) {
+    syncAsync(method, function(err, im) {
+      t.deepEqual(im.color(9,9).rgb()         , [ 0, 0, 0 ])
+      t.equal(im.color(9,9).alpha(100)|0  , 90)
+      t.deepEqual(im.color(11,11).rgb()       , [ 0, 0, 0 ])
+      t.equal(im.color(11,11).alpha(100)|0, 11)
+    })
+  });
+  [
+    im.blur.bind(im, 1, 2, 'yellow'),
+    im.blur.bind(im, {sigma: 1, radius: 2, channel: 'yellow'})
+  ].forEach(function(method) {
+    syncAsync(method, function(err, im) {
+      t.deepEqual(im.color(9,9).rgb()         , [ 0, 0, 0 ])
+      t.equal(im.color(9,9).alpha() , 1)
+      t.deepEqual(im.color(11,11).rgb()       , [ 0, 0, 0 ])
+      t.equal(im.color(11,11).alpha(), 0)
+      var color = im.color(70,70)
+      t.equal(im.color(70,70).r, im.color(70,70).g)
+      t.ok(im.color(70,70).b < im.color(70,70).r)
+    })
+  });
+  [
+    im.blur.bind(im, 1, 2, true),
+    im.blur.bind(im, {sigma: 1, radius: 2, gaussian: true})
+  ].forEach(function(method) {
+    syncAsync(method, function(err, im) {
+      t.deepEqual(im.color(9,9).rgb()         , [ 0, 0, 0 ])
+      t.equal(im.color(9,9).alpha(100)|0  , 91)
+      t.deepEqual(im.color(11,11).rgb()       , [ 0, 0, 0 ])
+      t.equal(im.color(11,11).alpha(100)|0, 10)
+    })
   });
 })
 

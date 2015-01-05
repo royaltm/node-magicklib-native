@@ -464,23 +464,51 @@ namespace NodeMagick {
   /**
    * Blur image
    *
-   * image.blur(sigma[, callback(err, image)])
-   * image.blur(sigma, radius[, callback(err, image)])
+   * image.blur(sigma[, radius][, channel][, gaussian][, callback(err, image)])
+   * image.blur(options[, callback(err, image)])
+   *
+   * options:
+   *
+   *   - sigma: standard deviation of the Laplacian or the Gaussian bell curve
+   *   - radius: the radius of the Gaussian, in pixels or number of neighbor
+   *             pixels to be included in the convolution mask
+   *   - channel: channel type string, e.g.: "yellow"
+   *   - gaussian: true for gaussian blur
+   *
    **/
   NAN_METHOD(Image::Blur) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageBlurJob, blur)
 
-    if ( argc == 2 ) {
-      if ( args[0]->IsNumber() && args[1]->IsNumber() ) {
-        blur.Setup(args[0]->NumberValue(), args[1]->NumberValue());
+    double sigma(0.0);
+    double radius(0.0);
+    NanUtf8String *channel(NULL);
+    bool gaussian(false);
+    if ( argc == 1 && args[0]->IsObject() ) {
+      Local<Object> options = args[0].As<Object>();
+      if ( options->Has(sigmaSym) )
+        sigma = options->Get(sigmaSym)->NumberValue();
+      if ( options->Has(radiusSym) )
+        radius = options->Get(radiusSym)->NumberValue();
+      if ( options->Has(channelSym) )
+        channel = new NanUtf8String( options->Get(channelSym) );
+      if ( options->Has(gaussianSym) )
+        gaussian = options->Get(gaussianSym)->BooleanValue();
+        blur.Setup(sigma, radius, channel, gaussian);
+    } else if ( argc >= 1 && argc <= 4 ) {
+      sigma = args[0]->NumberValue();
+      for( uint32_t i = 1; i < argc; ++i ) {
+        if ( args[i]->IsString() ) {
+          channel = new NanUtf8String(args[i]);
+        } else if (args[i]->IsBoolean() ) {
+          gaussian = args[i]->BooleanValue() ? 1 : 0;
+        } else {
+          radius = args[i]->NumberValue();
+        }
       }
-    } else if ( argc == 1 ) {
-      if ( args[0]->IsNumber() ) {
-        blur.Setup(args[0]->NumberValue());
-      }
+      blur.Setup(sigma, radius, channel, gaussian);
     }
 
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageBlurJob, blur, "blur()'s arguments should be 1 or 2 number(s)");
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageBlurJob, blur, "blur()'s arguments should number(s)[, string][, boolean]");
   }
 
   /**

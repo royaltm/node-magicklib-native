@@ -78,11 +78,12 @@ namespace NodeMagick {
   class ImageBlurJob : public ImageProcessJob {
     public:
       ImageBlurJob(void);
-      void Setup(double sigma);
-      void Setup(double sigma, double radius);
+      void Setup(double sigma_, double radius_, NanUtf8String *channel_, bool gaussian_);
       void ProcessImage(Image *image_);
     private:
       double sigma, radius;
+      bool gaussian;
+      auto_ptr<NanUtf8String> channel;
   };
 
   class ImageCloseJob : public ImageProcessJob {

@@ -40,20 +40,35 @@ namespace NodeMagick {
 
   ImageBlurJob::ImageBlurJob() : ImageProcessJob() {}
 
-  void ImageBlurJob::Setup(double sigma_) {
-    sigma = sigma_;
-    radius = 0;
-    ImageProcessJob::Setup();
-  }
-
-  void ImageBlurJob::Setup(double sigma_, double radius_) {
+  void ImageBlurJob::Setup(double sigma_, double radius_, NanUtf8String *channel_, bool gaussian_) {
     sigma = sigma_;
     radius = radius_;
+    channel.reset(channel_);
+    gaussian = gaussian_;
     ImageProcessJob::Setup();
   }
 
   void ImageBlurJob::ProcessImage(Image *image) {
-    image->GetMagickImage()->blur(radius, sigma);
+    NanUtf8String *channel_ = channel.get();
+    if ( channel_ != NULL ) {
+      Magick::ChannelType channelType( Magick::UndefinedChannel );
+      if ( channel_ != NULL ) {
+        ssize_t type = MagickCore::ParseCommandOption(MagickCore::MagickChannelOptions, Magick::MagickFalse, **channel_);
+        if ( type == -1 ) {
+          throw ImageChannelException();
+        }
+        channelType = (Magick::ChannelType) type;
+      }
+      if ( gaussian ) {
+        image->GetMagickImage()->gaussianBlurChannel(channelType, radius, sigma);
+      } else {
+        image->GetMagickImage()->blurChannel(channelType, radius, sigma);
+      }
+    } else if ( gaussian ) {
+      image->GetMagickImage()->gaussianBlur(radius, sigma);
+    } else {
+      image->GetMagickImage()->blur(radius, sigma);
+    }
   }
 
   /* ImageCloseJob */
