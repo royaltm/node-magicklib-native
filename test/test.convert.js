@@ -270,6 +270,26 @@ test("image.normalize", function (t) {
   })
 })
 
+test("image.oil", function (t) {
+  var im = new Image({src: blobImage, magick: "PNG", autoCopy: true, autoClose: false})
+  t.plan(2*2*2 + 2*2);
+  [
+    im.oil.bind(im),
+    im.oil.bind(im, 3)
+  ].forEach(function(method) {
+    syncAsync(method, function(err, im) {
+      t.ok(err == null)
+      var histogram = im.histogram()
+      t.ok(histogram.length < 2000)
+    })
+  });
+  syncAsync(im.oil.bind(im, 10), function(err, im) {
+    t.ok(err == null)
+    var histogram = im.histogram()
+    t.ok(histogram.length < 1000)
+  });
+})
+
 test("image.quantize/histogram", function (t) {
   var im = new Image({src: blobImage, magick: "PNG", autoCopy: true, autoClose: false})
   t.plan(3 + 4 + 3 + 2*2*4 + 2*2*(5+16*2) + 3*2*5)

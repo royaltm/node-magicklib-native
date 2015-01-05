@@ -373,6 +373,18 @@ namespace NodeMagick {
     image->GetMagickImage()->normalize();
   }
 
+  /* ImageOilJob */
+
+  ImageOilJob::ImageOilJob() : ImageProcessJob() {}
+
+  void ImageOilJob::Setup(size_t radius_) {
+    radius = radius_;
+    ImageProcessJob::Setup();
+  }
+  void ImageOilJob::ProcessImage(Image *image) {
+    image->GetMagickImage()->oilPaint(radius);
+  }
+
   /* ImagePingJob */
 
   ImagePingJob::ImagePingJob() : ImageProcessJob(true) {}

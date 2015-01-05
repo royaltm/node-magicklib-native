@@ -92,6 +92,7 @@ namespace NodeMagick {
     NODE_SET_PROTOTYPE_METHOD(tpl, "histogram"  , Histogram);
     NODE_SET_PROTOTYPE_METHOD(tpl, "noise"      , Noise);
     NODE_SET_PROTOTYPE_METHOD(tpl, "normalize"  , Normalize);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "oil"        , Oil);
     NODE_SET_PROTOTYPE_METHOD(tpl, "properties" , Properties);
     NODE_SET_PROTOTYPE_METHOD(tpl, "ping"       , Ping);
     NODE_SET_PROTOTYPE_METHOD(tpl, "quality"    , Quality);
@@ -975,6 +976,23 @@ namespace NodeMagick {
     }
 
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageNormalizeJob, normalizer, "normalize()'s 1st argument should be callback");
+  }
+
+  /**
+   * Oilpaint image
+   *
+   * image.oil([radius=3][, callback(err, image)])
+   **/
+  NAN_METHOD(Image::Oil) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageOilJob, oiljob)
+
+    if ( argc == 0 ) {
+      oiljob.Setup(3);
+    } else if ( argc == 1 ) {
+      oiljob.Setup( (size_t) args[0]->IntegerValue() );
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageOilJob, oiljob, "oil()'s 1st argument should be number");
   }
 
   /**
