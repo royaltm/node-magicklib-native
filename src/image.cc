@@ -577,8 +577,8 @@ namespace NodeMagick {
   /**
    * Comment image
    *
-   * image.comment(comment[,callback(err, comment)])
-   * image.comment([callback(err, image)])
+   * image.comment(comment[,callback(err, image)])
+   * image.comment([callback(err, comment)])
    **/
   NAN_METHOD(Image::Comment) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageCommentJob, commentjob)
@@ -594,7 +594,7 @@ namespace NodeMagick {
   }
 
   /**
-   * Peek or plot color pixel
+   * Color pixel plot or peek
    *
    * in synchronous context:
    * image.color(x, y) -> color

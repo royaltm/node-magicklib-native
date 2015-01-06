@@ -13,7 +13,13 @@ Magicklib Api
   var Image = magick.Image;
 ```
 
-Most Image methods return image (this) object.
+Image methods return image (this) object unless they read something from image in synchronous mode.
+
+Invoking method without callback either executes synchronously or adds command to asynchronous batch.
+Image method will perform synchronously if: `image.isSync == true`
+
+The synchronous mode is mainly for performing image operation while loading modules or to use in repl.
+The preferred way of dealing with images in node should be always asynchronous.
 
 EOF
 
