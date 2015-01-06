@@ -2,7 +2,12 @@ language: node_js
 node_js:
   - "0.11"
   - "0.10"
+env: TAP_TIMEOUT=120
 before_install:
-  - sudo add-apt-repository -y ppa:mlen.pl/imagemagick
-  - sudo apt-get update
-  - sudo apt-get -y --reinstall install imagemagick
+  - wget http://www.imagemagick.org/download/releases/ImageMagick-6.8.7-10.tar.bz2
+  - tar xf ImageMagick-6.8.7-10.tar.bz2
+  - cd ImageMagick*
+  - ./configure --prefix=/usr
+  - make
+  - sudo make install
+  - cd ..
