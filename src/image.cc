@@ -184,12 +184,13 @@ namespace NodeMagick {
     if ( isCloned ) return;
     const Magick::Image * mimage( magickimage.get() );
     magickcopy = magickimage; /* image transfered not copied (auto_ptr) */
+
+    isCloned = true;
+
     if ( mimage != NULL )
       magickimage.reset( new Magick::Image( *mimage ) );
     else
       magickimage.reset( new Magick::Image() );
-
-    isCloned = true;
   }
 
   /* restore internal magickimage */
