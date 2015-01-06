@@ -3,6 +3,8 @@ ImageMagick library
 
 ImageMagick Magick++ library bindings for versatile programatic image manipulation.
 
+[![Build Status][BS img]][Build Status]
+
 This is another [approach][node-imagemagick-native] to bring image manipulation capabilities to nodejs.
 However conceptually it's more like [this][node-graphicsmagick]. You know, "same same, but different".
 
@@ -304,3 +306,5 @@ See [API.md](API.md) for more.
 [win-7-64bit-sdk-download]: http://www.microsoft.com/en-us/download/details.aspx?id=8279
 [cusp-win-sdk-71-download]: http://www.microsoft.com/en-us/download/details.aspx?id=4422
 [node-gyp-troubleshooting]: https://github.com/TooTallNate/node-gyp#installation
+[Build Status]: https://travis-ci.org/royaltm/node-magicklib-native
+[BS img]: https://travis-ci.org/royaltm/node-magicklib-native.svg
