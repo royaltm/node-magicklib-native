@@ -85,32 +85,32 @@ namespace NodeMagick {
   }
 
   static void init(Handle<Object> exports) {
-    batchSym      = NODE_PSYMBOL("batch");
-    autoCloseSym  = NODE_PSYMBOL("autoClose");
-    autoCopySym   = NODE_PSYMBOL("autoCopy");
-    magickSym     = NODE_PSYMBOL("magick");
-    columnsSym    = NODE_PSYMBOL("columns");
-    rowsSym       = NODE_PSYMBOL("rows");
-    pageSym       = NODE_PSYMBOL("page");
-    colorSym      = NODE_PSYMBOL("color");
-    srcSym        = NODE_PSYMBOL("src");
-    backgroundSym = NODE_PSYMBOL("background");
-    fuzzSym       = NODE_PSYMBOL("fuzz");
-    colorsSym     = NODE_PSYMBOL("colors");
-    colorspaceSym = NODE_PSYMBOL("colorspace");
-    ditherSym     = NODE_PSYMBOL("dither");
-    noiseSym      = NODE_PSYMBOL("noise");
-    channelSym    = NODE_PSYMBOL("channel");
-    sigmaSym      = NODE_PSYMBOL("sigma");
-    radiusSym     = NODE_PSYMBOL("radius");
-    gaussianSym   = NODE_PSYMBOL("gaussian");
-    widthSym      = NODE_PSYMBOL("width");
-    heightSym     = NODE_PSYMBOL("height");
-    xSym          = NODE_PSYMBOL("x");
-    ySym          = NODE_PSYMBOL("y");
-    sizeSym       = NODE_PSYMBOL("size");
-    modeSym       = NODE_PSYMBOL("mode");
-    gravitySym    = NODE_PSYMBOL("gravity");
+    NanAssignPersistent(batchSym      , NanNew<String>("batch"));
+    NanAssignPersistent(autoCloseSym  , NanNew<String>("autoClose"));
+    NanAssignPersistent(autoCopySym   , NanNew<String>("autoCopy"));
+    NanAssignPersistent(magickSym     , NanNew<String>("magick"));
+    NanAssignPersistent(columnsSym    , NanNew<String>("columns"));
+    NanAssignPersistent(rowsSym       , NanNew<String>("rows"));
+    NanAssignPersistent(pageSym       , NanNew<String>("page"));
+    NanAssignPersistent(colorSym      , NanNew<String>("color"));
+    NanAssignPersistent(srcSym        , NanNew<String>("src"));
+    NanAssignPersistent(backgroundSym , NanNew<String>("background"));
+    NanAssignPersistent(fuzzSym       , NanNew<String>("fuzz"));
+    NanAssignPersistent(colorsSym     , NanNew<String>("colors"));
+    NanAssignPersistent(colorspaceSym , NanNew<String>("colorspace"));
+    NanAssignPersistent(ditherSym     , NanNew<String>("dither"));
+    NanAssignPersistent(noiseSym      , NanNew<String>("noise"));
+    NanAssignPersistent(channelSym    , NanNew<String>("channel"));
+    NanAssignPersistent(sigmaSym      , NanNew<String>("sigma"));
+    NanAssignPersistent(radiusSym     , NanNew<String>("radius"));
+    NanAssignPersistent(gaussianSym   , NanNew<String>("gaussian"));
+    NanAssignPersistent(widthSym      , NanNew<String>("width"));
+    NanAssignPersistent(heightSym     , NanNew<String>("height"));
+    NanAssignPersistent(xSym          , NanNew<String>("x"));
+    NanAssignPersistent(ySym          , NanNew<String>("y"));
+    NanAssignPersistent(sizeSym       , NanNew<String>("size"));
+    NanAssignPersistent(modeSym       , NanNew<String>("mode"));
+    NanAssignPersistent(gravitySym    , NanNew<String>("gravity"));
 
     // NanAssignPersistent(bufferFunction, Local<Function>::Cast(NanGetCurrentContext()->Global()->Get(NanNew<String>("Buffer"))));
 

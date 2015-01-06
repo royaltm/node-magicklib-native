@@ -354,8 +354,8 @@ namespace NodeMagick {
  
             } else {
               const Handle<Object> &properties = args[0].As<Object>();
-              if ( properties->Has(srcSym) ) {
-                Local<Value> src = properties->Get(srcSym);
+              if ( properties->Has(NanNew(srcSym)) ) {
+                Local<Value> src = properties->Get(NanNew(srcSym));
                 if ( Buffer::HasInstance(src) ) {
                   Local<Object> buffer( src.As<Object>() );
                   Magick::Blob blob(Buffer::Data(buffer), Buffer::Length(buffer));
@@ -371,12 +371,12 @@ namespace NodeMagick {
                   return NanThrowError("src option should be a Buffer or string");
                 }
               } else {
-                size_t width  = properties->Get(columnsSym)->Uint32Value();
-                size_t height = properties->Get(rowsSym)->Uint32Value();
+                size_t width  = properties->Get(NanNew(columnsSym))->Uint32Value();
+                size_t height = properties->Get(NanNew(rowsSym))->Uint32Value();
                 if ( width == 0 || height == 0 ) {
                   image = new Image();
                 } else {
-                  Local<Value> colorValue = properties->Get(colorSym);
+                  Local<Value> colorValue = properties->Get(NanNew(colorSym));
                   if ( colorValue->IsString() ) {
                     NanUtf8String color(colorValue);
                     image = new Image(width, height, *color);
@@ -388,22 +388,22 @@ namespace NodeMagick {
                   }
                 }
               }
-              if ( properties->Has(batchSym) )
-                image->IsPersistentBatch( properties->Get(batchSym)->BooleanValue() );
-              if ( properties->Has(autoCopySym) )
-                image->autoCopy = properties->Get(autoCopySym)->BooleanValue();
-              if ( properties->Has(autoCloseSym) )
-                image->autoClose = properties->Get(autoCloseSym)->BooleanValue();
-              if ( properties->Has(magickSym) )
-                image->GetMagickImage()->magick( *NanUtf8String( properties->Get(magickSym) ) );
-              if ( properties->Has(pageSym) )
-                image->GetMagickImage()->page( *NanUtf8String( properties->Get(pageSym) ) );
-              if ( properties->Has(backgroundSym) ) {
-                NODEMAGICK_COLOR_FROM_VALUE( color, properties->Get(backgroundSym) );
+              if ( properties->Has(NanNew(batchSym)) )
+                image->IsPersistentBatch( properties->Get(NanNew(batchSym))->BooleanValue() );
+              if ( properties->Has(NanNew(autoCopySym)) )
+                image->autoCopy = properties->Get(NanNew(autoCopySym))->BooleanValue();
+              if ( properties->Has(NanNew(autoCloseSym)) )
+                image->autoClose = properties->Get(NanNew(autoCloseSym))->BooleanValue();
+              if ( properties->Has(NanNew(magickSym)) )
+                image->GetMagickImage()->magick( *NanUtf8String( properties->Get(NanNew(magickSym)) ) );
+              if ( properties->Has(NanNew(pageSym)) )
+                image->GetMagickImage()->page( *NanUtf8String( properties->Get(NanNew(pageSym)) ) );
+              if ( properties->Has(NanNew(backgroundSym)) ) {
+                NODEMAGICK_COLOR_FROM_VALUE( color, properties->Get(NanNew(backgroundSym)) );
                 image->GetMagickImage()->backgroundColor( color );
               }
-              if ( properties->Has(fuzzSym) )
-                image->GetMagickImage()->colorFuzz( properties->Get(fuzzSym)->NumberValue() );
+              if ( properties->Has(NanNew(fuzzSym)) )
+                image->GetMagickImage()->colorFuzz( properties->Get(NanNew(fuzzSym))->NumberValue() );
             }
           } else {
             image = new Image();
@@ -455,7 +455,7 @@ namespace NodeMagick {
     if ( argc >= 1 ) {
       bool batch;
       if ( args[0]->IsObject() ) {
-        batch = NanBooleanOptionValue(args[0].As<Object>(), batchSym);
+        batch = NanBooleanOptionValue(args[0].As<Object>(), NanNew(batchSym));
       } else
         batch = args[0]->BooleanValue();
       image->SetupBatch(batch);
@@ -488,14 +488,14 @@ namespace NodeMagick {
     bool gaussian(false);
     if ( argc == 1 && args[0]->IsObject() ) {
       Local<Object> options = args[0].As<Object>();
-      if ( options->Has(sigmaSym) )
-        sigma = options->Get(sigmaSym)->NumberValue();
-      if ( options->Has(radiusSym) )
-        radius = options->Get(radiusSym)->NumberValue();
-      if ( options->Has(channelSym) )
-        channel = new NanUtf8String( options->Get(channelSym) );
-      if ( options->Has(gaussianSym) )
-        gaussian = options->Get(gaussianSym)->BooleanValue();
+      if ( options->Has(NanNew(sigmaSym)) )
+        sigma = options->Get(NanNew(sigmaSym))->NumberValue();
+      if ( options->Has(NanNew(radiusSym)) )
+        radius = options->Get(NanNew(radiusSym))->NumberValue();
+      if ( options->Has(NanNew(channelSym)) )
+        channel = new NanUtf8String( options->Get(NanNew(channelSym)) );
+      if ( options->Has(NanNew(gaussianSym)) )
+        gaussian = options->Get(NanNew(gaussianSym))->BooleanValue();
       blur.Setup(sigma, radius, channel, gaussian);
     } else if ( argc >= 1 && argc <= 4 ) {
       sigma = args[0]->NumberValue();
@@ -530,7 +530,7 @@ namespace NodeMagick {
 
     if ( argc >= 1 ) {
       if ( args[0]->IsObject() ) {
-        copyjob.Setup( NanBooleanOptionValue(args[0].As<Object>(), autoCopySym) );
+        copyjob.Setup( NanBooleanOptionValue(args[0].As<Object>(), NanNew(autoCopySym)) );
       } else if ( args[0]->IsBoolean() ) {
         copyjob.Setup( args[0]->BooleanValue() );
       }
@@ -562,7 +562,7 @@ namespace NodeMagick {
 
     if ( argc >= 1 ) {
       if ( args[0]->IsObject() ) {
-        image->autoClose = NanBooleanOptionValue(args[0].As<Object>(), autoCloseSym, true);
+        image->autoClose = NanBooleanOptionValue(args[0].As<Object>(), NanNew(autoCloseSym), true);
         NanReturnValue( args.This() );
       } else if ( args[0]->IsBoolean() ) {
         image->autoClose = args[0]->BooleanValue();
@@ -695,20 +695,20 @@ namespace NodeMagick {
       } else if ( args[0]->IsObject() ) {
         Local<Object> options = args[0].As<Object>();
         Magick::Geometry geometry;
-        if ( options->Has(sizeSym) ) {
-          Local<Value> size = options->Get(sizeSym);
+        if ( options->Has(NanNew(sizeSym)) ) {
+          Local<Value> size = options->Get(NanNew(sizeSym));
           if ( size->IsArray() ) {
             SetGeometryFromV8Array( geometry, size.As<Array>() );
           } else if ( size->IsString() ) {
             geometry = *NanUtf8String( size );
           }
-        } else if ( options->Has(widthSym) && options->Has(heightSym) ) {
-          geometry.width( options->Get(widthSym)->Uint32Value() );
-          geometry.height( options->Get(heightSym)->Uint32Value() );
+        } else if ( options->Has(NanNew(widthSym)) && options->Has(NanNew(heightSym)) ) {
+          geometry.width( options->Get(NanNew(widthSym))->Uint32Value() );
+          geometry.height( options->Get(NanNew(heightSym))->Uint32Value() );
         }
-        if ( options->Has(xSym) && options->Has(ySym) ) {
-          geometry.xOff( options->Get(xSym)->Int32Value() );
-          geometry.yOff( options->Get(ySym)->Int32Value() );
+        if ( options->Has(NanNew(xSym)) && options->Has(NanNew(ySym)) ) {
+          geometry.xOff( options->Get(NanNew(xSym))->Int32Value() );
+          geometry.yOff( options->Get(NanNew(ySym))->Int32Value() );
         }
         if ( geometry.isValid() ) {
           geometry.xNegative(false);
@@ -746,7 +746,7 @@ namespace NodeMagick {
     if ( argc >= 1 ) {
       if ( args[0]->IsObject() ) {
         setpersist = true;
-        batch = NanBooleanOptionValue(args[0].As<Object>(), batchSym);
+        batch = NanBooleanOptionValue(args[0].As<Object>(), NanNew(batchSym));
       } else if ( args[0]->IsBoolean() ) {
         setpersist = true;
         batch = args[0]->BooleanValue();
@@ -847,27 +847,27 @@ namespace NodeMagick {
           SetGeometryFromV8Array( geometry, args[0].As<Array>() );
         } else if ( args[0]->IsObject() ) {
           Local<Object> options = args[0].As<Object>();
-          if ( options->Has(sizeSym) ) {
-            Local<Value> size = options->Get(sizeSym);
+          if ( options->Has(NanNew(sizeSym)) ) {
+            Local<Value> size = options->Get(NanNew(sizeSym));
             if ( size->IsArray() ) {
               SetGeometryFromV8Array( geometry, size.As<Array>() );
             } else if ( size->IsString() ) {
               geometry = *NanUtf8String( size );
             }
-          } else if ( options->Has(widthSym) && options->Has(heightSym) ) {
-            geometry.width( options->Get(widthSym)->Uint32Value() );
-            geometry.height( options->Get(heightSym)->Uint32Value() );
+          } else if ( options->Has(NanNew(widthSym)) && options->Has(NanNew(heightSym)) ) {
+            geometry.width( options->Get(NanNew(widthSym))->Uint32Value() );
+            geometry.height( options->Get(NanNew(heightSym))->Uint32Value() );
             gravity = Magick::CenterGravity;
           }
-          if ( options->Has(xSym) && options->Has(ySym) ) {
-            geometry.xOff( options->Get(xSym)->Int32Value() );
-            geometry.yOff( options->Get(ySym)->Int32Value() );
+          if ( options->Has(NanNew(xSym)) && options->Has(NanNew(ySym)) ) {
+            geometry.xOff( options->Get(NanNew(xSym))->Int32Value() );
+            geometry.yOff( options->Get(NanNew(ySym))->Int32Value() );
             gravity = Magick::ForgetGravity;
-          } else if ( options->Has(gravitySym) ) {
-            gravity = GetGravityFromString( *NanUtf8String( options->Get(gravitySym) ) );
+          } else if ( options->Has(NanNew(gravitySym)) ) {
+            gravity = GetGravityFromString( *NanUtf8String( options->Get(NanNew(gravitySym)) ) );
           }
-          if ( options->Has(colorSym) ) {
-            if ( ! SetColorFromV8Value( color, options->Get(colorSym), &errmsg ) )
+          if ( options->Has(NanNew(colorSym)) ) {
+            if ( ! SetColorFromV8Value( color, options->Get(NanNew(colorSym)), &errmsg ) )
               return NanThrowError(errmsg);
           }
         }
@@ -1024,12 +1024,12 @@ namespace NodeMagick {
         noisejob.Setup( new NanUtf8String(args[0]) );
       } else if ( args[0]->IsObject() ) {
         Local<Object> options = args[0].As<Object>();
-        if ( options->Has(noiseSym) ) {
-          if ( options->Has(channelSym) ) {
-            noisejob.Setup( new NanUtf8String(options->Get(noiseSym)),
-                            new NanUtf8String(options->Get(channelSym)) );
+        if ( options->Has(NanNew(noiseSym)) ) {
+          if ( options->Has(NanNew(channelSym)) ) {
+            noisejob.Setup( new NanUtf8String(options->Get(NanNew(noiseSym))),
+                            new NanUtf8String(options->Get(NanNew(channelSym))) );
           } else {
-            noisejob.Setup( new NanUtf8String(options->Get(noiseSym)) );
+            noisejob.Setup( new NanUtf8String(options->Get(NanNew(noiseSym))) );
           }
         }
       }
@@ -1134,24 +1134,24 @@ namespace NodeMagick {
       if ( ! args[0]->IsUndefined() && args[0]->IsObject() ) {
         Local<Object> properties( args[0].As<Object>() );
         propjob.Setup(false);
-        if ( properties->Has( batchSym ) )
-          propjob.batch = properties->Get(batchSym)->BooleanValue() ? 1 : 0;
-        if ( properties->Has( autoCloseSym ) )
-          propjob.autoClose = properties->Get(autoCloseSym)->BooleanValue() ? 1 : 0;
-        if ( properties->Has( autoCopySym ) )
-          propjob.autoCopy = properties->Get(autoCopySym)->BooleanValue() ? 1 : 0;
-        if ( properties->Has( magickSym ) )
-          propjob.magick.reset( new NanUtf8String( properties->Get(magickSym) ) );
-        if ( properties->Has( columnsSym ) )
-          propjob.columns = properties->Get(columnsSym)->Uint32Value();
-        if ( properties->Has( rowsSym ) )
-          propjob.rows = properties->Get(rowsSym)->Uint32Value();
-        if ( properties->Has( pageSym ) )
-          propjob.page.reset( new NanUtf8String( properties->Get(pageSym) ) );
-        if ( properties->Has( fuzzSym ) )
-          propjob.fuzz = properties->Get(fuzzSym)->NumberValue();
-        if ( properties->Has( backgroundSym ) ) {
-          NODEMAGICK_COLOR_FROM_VALUE( color, properties->Get(backgroundSym) );
+        if ( properties->Has( NanNew(batchSym) ) )
+          propjob.batch = properties->Get(NanNew(batchSym))->BooleanValue() ? 1 : 0;
+        if ( properties->Has( NanNew(autoCloseSym) ) )
+          propjob.autoClose = properties->Get(NanNew(autoCloseSym))->BooleanValue() ? 1 : 0;
+        if ( properties->Has( NanNew(autoCopySym) ) )
+          propjob.autoCopy = properties->Get(NanNew(autoCopySym))->BooleanValue() ? 1 : 0;
+        if ( properties->Has( NanNew(magickSym) ) )
+          propjob.magick.reset( new NanUtf8String( properties->Get(NanNew(magickSym)) ) );
+        if ( properties->Has( NanNew(columnsSym) ) )
+          propjob.columns = properties->Get(NanNew(columnsSym))->Uint32Value();
+        if ( properties->Has( NanNew(rowsSym) ) )
+          propjob.rows = properties->Get(NanNew(rowsSym))->Uint32Value();
+        if ( properties->Has( NanNew(pageSym) ) )
+          propjob.page.reset( new NanUtf8String( properties->Get(NanNew(pageSym)) ) );
+        if ( properties->Has( NanNew(fuzzSym) ) )
+          propjob.fuzz = properties->Get(NanNew(fuzzSym))->NumberValue();
+        if ( properties->Has( NanNew(backgroundSym) ) ) {
+          NODEMAGICK_COLOR_FROM_VALUE( color, properties->Get(NanNew(backgroundSym)) );
           propjob.background = color;
         }
       }
@@ -1199,12 +1199,12 @@ namespace NodeMagick {
     NanUtf8String *colorSpace(NULL);
     if ( argc == 1 && args[0]->IsObject() ) {
       Local<Object> options = args[0].As<Object>();
-      if ( options->Has(colorsSym) )
-        colors = (ssize_t) options->Get(colorsSym)->IntegerValue();
-      if ( options->Has(colorspaceSym) )
-        colorSpace = new NanUtf8String(options->Get(colorspaceSym));
-      if ( options->Has(ditherSym) )
-        dither = options->Get(ditherSym)->BooleanValue() ? 1 : 0;
+      if ( options->Has(NanNew(colorsSym)) )
+        colors = (ssize_t) options->Get(NanNew(colorsSym))->IntegerValue();
+      if ( options->Has(NanNew(colorspaceSym)) )
+        colorSpace = new NanUtf8String(options->Get(NanNew(colorspaceSym)));
+      if ( options->Has(NanNew(ditherSym)) )
+        dither = options->Get(NanNew(ditherSym))->BooleanValue() ? 1 : 0;
     } else if ( argc <= 3 ) {
       for( uint32_t i = 0; i < argc; ++i ) {
         if ( args[i]->IsString() ) {
@@ -1278,12 +1278,12 @@ namespace NodeMagick {
     NanUtf8String *channel(NULL);
     if ( argc == 1 && args[0]->IsObject() ) {
       Local<Object> options = args[0].As<Object>();
-      if ( options->Has(sigmaSym) )
-        sigma = options->Get(sigmaSym)->NumberValue();
-      if ( options->Has(radiusSym) )
-        radius = options->Get(radiusSym)->NumberValue();
-      if ( options->Has(channelSym) )
-        channel = new NanUtf8String( options->Get(channelSym) );
+      if ( options->Has(NanNew(sigmaSym)) )
+        sigma = options->Get(NanNew(sigmaSym))->NumberValue();
+      if ( options->Has(NanNew(radiusSym)) )
+        radius = options->Get(NanNew(radiusSym))->NumberValue();
+      if ( options->Has(NanNew(channelSym)) )
+        channel = new NanUtf8String( options->Get(NanNew(channelSym)) );
       sharpener.Setup(sigma, radius, channel);
     } else if ( argc >= 1 && argc <= 3 ) {
       sigma = args[0]->NumberValue();
@@ -1534,19 +1534,19 @@ namespace NodeMagick {
         } else if ( args[0]->IsObject() ) {
           Local<Object> options = args[0].As<Object>();
           Magick::Geometry geometry;
-          if ( options->Has(sizeSym) ) {
-            Local<Value> size = options->Get(sizeSym);
+          if ( options->Has(NanNew(sizeSym)) ) {
+            Local<Value> size = options->Get(NanNew(sizeSym));
             if ( size->IsArray() ) {
               SetGeometryFromV8Array( geometry, size.As<Array>() );
             } else if ( size->IsString() ) {
               geometry = *NanUtf8String( size );
             }
-          } else if ( options->Has(widthSym) && options->Has(heightSym) ) {
-            geometry.width( options->Get(widthSym)->Uint32Value() );
-            geometry.height( options->Get(heightSym)->Uint32Value() );
+          } else if ( options->Has(NanNew(widthSym)) && options->Has(NanNew(heightSym)) ) {
+            geometry.width( options->Get(NanNew(widthSym))->Uint32Value() );
+            geometry.height( options->Get(NanNew(heightSym))->Uint32Value() );
           }
-          if ( options->Has(modeSym) )
-            ReadResizeMode( *NanUtf8String( options->Get(modeSym) ), geometry, resizeType);
+          if ( options->Has(NanNew(modeSym)) )
+            ReadResizeMode( *NanUtf8String( options->Get(NanNew(modeSym)) ), geometry, resizeType);
           if ( geometry.isValid() )
             resizer.Setup( geometry, resizeType );
         }

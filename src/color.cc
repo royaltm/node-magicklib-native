@@ -222,10 +222,10 @@ namespace NodeMagick {
   Persistent<String> Color::alphaSym;
 
   void Color::Init(Handle<Object> exports) {
-    redSym   = NODE_PSYMBOL("r");
-    greenSym = NODE_PSYMBOL("g");
-    blueSym  = NODE_PSYMBOL("b");
-    alphaSym = NODE_PSYMBOL("a");
+    NanAssignPersistent(redSym  , NanNew<String>("r"));
+    NanAssignPersistent(greenSym, NanNew<String>("g"));
+    NanAssignPersistent(blueSym , NanNew<String>("b"));
+    NanAssignPersistent(alphaSym, NanNew<String>("a"));
     Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
     NanAssignPersistent(constructor, tpl);
     Local<String> colorSym = NanNew<String>("Color");
@@ -364,10 +364,10 @@ namespace NodeMagick {
 
       Magick::Color *mc = &color->magickcolor;
 
-      self->Set(redSym,   NanNew<Integer>(mc->redQuantum()),   ReadOnly);
-      self->Set(greenSym, NanNew<Integer>(mc->greenQuantum()), ReadOnly);
-      self->Set(blueSym,  NanNew<Integer>(mc->blueQuantum()),  ReadOnly);
-      self->Set(alphaSym, NanNew<Integer>(mc->alphaQuantum()), ReadOnly);
+      self->Set(NanNew(redSym),   NanNew<Integer>(mc->redQuantum()),   ReadOnly);
+      self->Set(NanNew(greenSym), NanNew<Integer>(mc->greenQuantum()), ReadOnly);
+      self->Set(NanNew(blueSym),  NanNew<Integer>(mc->blueQuantum()),  ReadOnly);
+      self->Set(NanNew(alphaSym), NanNew<Integer>(mc->alphaQuantum()), ReadOnly);
 
       NanReturnValue(self);
     } else {

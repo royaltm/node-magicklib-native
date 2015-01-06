@@ -492,15 +492,15 @@ namespace NodeMagick {
   Local<Value> ImagePropertiesJob::ReturnedValue() {
     NanEscapableScope();
     Local<Object> properties( NanNew<Object>() );
-    properties->Set(batchSym, NanNew<Boolean>( batch != 0 ) );
-    properties->Set(autoCloseSym, NanNew<Boolean>( autoClose != 0 ) );
-    properties->Set(autoCopySym, NanNew<Boolean>( autoCopy != 0 ) );
-    properties->Set(magickSym, NanNew<String>( magickStr ) );
-    properties->Set(columnsSym, NanNew<Integer>( (int32_t) columns ) );
-    properties->Set(rowsSym, NanNew<Integer>( (int32_t) rows ) );
-    properties->Set(pageSym, NanNew<String>( string(pageGeometry) ) );
-    properties->Set(backgroundSym, Color::NewColorObjectV8( background ) );
-    properties->Set(fuzzSym, NanNew<Number>( fuzz ) );
+    properties->Set(NanNew(batchSym), NanNew<Boolean>( batch != 0 ) );
+    properties->Set(NanNew(autoCloseSym), NanNew<Boolean>( autoClose != 0 ) );
+    properties->Set(NanNew(autoCopySym), NanNew<Boolean>( autoCopy != 0 ) );
+    properties->Set(NanNew(magickSym), NanNew<String>( magickStr ) );
+    properties->Set(NanNew(columnsSym), NanNew<Integer>( (int32_t) columns ) );
+    properties->Set(NanNew(rowsSym), NanNew<Integer>( (int32_t) rows ) );
+    properties->Set(NanNew(pageSym), NanNew<String>( string(pageGeometry) ) );
+    properties->Set(NanNew(backgroundSym), Color::NewColorObjectV8( background ) );
+    properties->Set(NanNew(fuzzSym), NanNew<Number>( fuzz ) );
     return NanEscapeScope(properties);
   }
 

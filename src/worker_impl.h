@@ -142,14 +142,15 @@ namespace NodeMagick {
   template <class T>
   Local<Value> Worker<T>::SyncProcess(T &job, Local<Object> self) {
     NanEscapableScope();
+    Local<Value> value;
     try {
       ProcessJob( job );
+      value = NanNew(job.HasReturnValue() ? job.ReturnedValue() : ReturnedValue(self) );
     } catch (exception& err) {
-      return NanThrowError(err.what());
+      NanThrowError(err.what());
     } catch (...) {
-      return NanThrowError("unhandled error");
+      NanThrowError("unhandled error");
     }
-    Local<Value> value ( NanNew(job.HasReturnValue() ? job.ReturnedValue() : ReturnedValue(self) ) );
     JobComplete(false);
     return NanEscapeScope(value);
   }
