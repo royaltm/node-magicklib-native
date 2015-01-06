@@ -1,8 +1,13 @@
-Magick Node Api
-===============
+Magicklib Api
+=============
+
+```
+  npm install magicklib-native
+```
 
 ```js
-  magick = require('magicklib');
+  var magick = require('magicklib-native');
+  var Image = magick.Image;
 ```
 
 Most Image methods return image (this) object.

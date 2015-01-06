@@ -6,7 +6,10 @@ ImageMagick Magick++ library bindings for versatile programatic image manipulati
 This is another [approach][node-imagemagick-native] to bring image manipulation capabilities to nodejs.
 However conceptually it's more like [this][node-graphicsmagick]. You know, "same same, but different".
 
-This is work in progress.
+WARNING:
+
+This is work in progress...
+
 
 Magicklib provides an `Image` object which can be manipulated in both sync and async mode.
 The async mode is triggered either by providing callback to utility method as the last argument or
