@@ -1036,7 +1036,7 @@ namespace NodeMagick {
     if ( argc == 0 ) {
       oiljob.Setup(3);
     } else if ( argc == 1 ) {
-      oiljob.Setup( (size_t) args[0]->IntegerValue() );
+      oiljob.Setup( args[0]->NumberValue() );
     }
 
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageOilJob, oiljob, "oil()'s 1st argument should be number");

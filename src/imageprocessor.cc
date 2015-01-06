@@ -396,7 +396,7 @@ namespace NodeMagick {
 
   ImageOilJob::ImageOilJob() : ImageProcessJob() {}
 
-  void ImageOilJob::Setup(size_t radius_) {
+  void ImageOilJob::Setup(double radius_) {
     radius = radius_;
     ImageProcessJob::Setup();
   }

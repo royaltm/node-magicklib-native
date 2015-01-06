@@ -231,10 +231,10 @@ namespace NodeMagick {
   class ImageOilJob : public ImageProcessJob {
     public:
       ImageOilJob(void);
-      void Setup(size_t radius_);
+      void Setup(double radius_);
       void ProcessImage(Image *image_);
     private:
-      size_t radius;
+      double radius;
   };
 
   class ImagePingJob : public ImageProcessJob {
