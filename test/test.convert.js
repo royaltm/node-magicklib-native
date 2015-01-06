@@ -86,7 +86,7 @@ test("image.blur", function (t) {
 
 test("image.crop", function (t) {
   var im = new Image({src: blobT160, autoCopy: true, autoClose: false})
-  t.plan(8 + 3*2*9 + 3*2*9)
+  t.plan(8 + 6*2*9 + 6*2*9)
   t.deepEqual(im.size()               , [ 160, 160 ])
   t.deepEqual(im.color(0,    0).rgba(), [ 0, 0, 0, 1 ])
   t.deepEqual(im.color(9,    9).rgba(), [ 0, 0, 0, 1 ])
@@ -98,7 +98,10 @@ test("image.crop", function (t) {
   [
     im.crop.bind(im, 160, 160, 10, 10),
     im.crop.bind(im, [160, 160, 10, 10]),
-    im.crop.bind(im, "160x160+10+10")
+    im.crop.bind(im, "160x160+10+10"),
+    im.crop.bind(im, {width: 160, height: 160, x: 10, y: 10}),
+    im.crop.bind(im, {size: [160, 160, 10, 10]}),
+    im.crop.bind(im, {size: "160x160+10+10"})
   ].forEach(function(method) {
     syncAsync(method, function(err, im) {
       t.strictEqual(im.page               , "160x160+10+10")
@@ -115,7 +118,10 @@ test("image.crop", function (t) {
   [
     im.crop.bind(im, 160, 160, -10, -10),
     im.crop.bind(im, [160, 160, -10, -10]),
-    im.crop.bind(im, "160x160-10-10")
+    im.crop.bind(im, "160x160-10-10"),
+    im.crop.bind(im, {width: 160, height: 160, x: -10, y: -10}),
+    im.crop.bind(im, {size: [160, 160, -10, -10]}),
+    im.crop.bind(im, {size: "160x160-10-10"})
   ].forEach(function(method) {
     syncAsync(method, function(err, im) {
       t.strictEqual(im.page               , "160x160")

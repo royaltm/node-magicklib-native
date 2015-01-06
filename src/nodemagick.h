@@ -47,6 +47,8 @@ namespace NodeMagick {
   extern Persistent<String> gaussianSym;
   extern Persistent<String> widthSym;
   extern Persistent<String> heightSym;
+  extern Persistent<String> xSym;
+  extern Persistent<String> ySym;
   extern Persistent<String> sizeSym;
   extern Persistent<String> modeSym;
 

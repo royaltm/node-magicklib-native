@@ -656,10 +656,17 @@ namespace NodeMagick {
    *
    * image.crop(width, height, x, y[, callback(err, image)])
    * image.crop(size[, callback(err, image)])
-   * image.crop(geometry[, callback(err, image)])
+   * image.crop(options[, callback(err, image)])
    *
-   * size: an Array of [width, height, x, y]
-   * geometry: geometry string
+   * size: an Array of [width, height, x, y] or geometry string
+   *
+   * options:
+   *
+   *   - size: crop size [witdth, height, x, y] or geometry string
+   *   - width: crop width
+   *   - height: crop height
+   *   - x: crop column offset
+   *   - y: crop row offset
    **/
   NAN_METHOD(Image::Crop) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageCropJob, cropper)
@@ -683,6 +690,29 @@ namespace NodeMagick {
         Magick::Geometry geometry;
         Local<Array> size( args[0].As<Array>() );
         if ( SetGeometryFromV8Array( geometry, size ) ) {
+          cropper.Setup(geometry);
+        }
+      } else if ( args[0]->IsObject() ) {
+        Local<Object> options = args[0].As<Object>();
+        Magick::Geometry geometry;
+        if ( options->Has(sizeSym) ) {
+          Local<Value> size = options->Get(sizeSym);
+          if ( size->IsArray() ) {
+            SetGeometryFromV8Array( geometry, size.As<Array>() );
+          } else if ( size->IsString() ) {
+            geometry = *NanUtf8String( size );
+          }
+        } else if ( options->Has(widthSym) && options->Has(heightSym) ) {
+          geometry.width( options->Get(widthSym)->Uint32Value() );
+          geometry.height( options->Get(heightSym)->Uint32Value() );
+        }
+        if ( options->Has(xSym) && options->Has(ySym) ) {
+          geometry.xOff( options->Get(xSym)->Int32Value() );
+          geometry.yOff( options->Get(ySym)->Int32Value() );
+        }
+        if ( geometry.isValid() ) {
+          geometry.xNegative(false);
+          geometry.yNegative(false);
           cropper.Setup(geometry);
         }
       }
@@ -1448,7 +1478,7 @@ namespace NodeMagick {
       }
       if ( argc == 2 ) {
         if ( args[0]->IsNumber() && args[1]->IsNumber() ) {
-          Magick::Geometry geometry( args[0]->Int32Value(), args[1]->Int32Value() );
+          Magick::Geometry geometry( args[0]->Uint32Value(), args[1]->Uint32Value() );
           if ( modeargindex == 2 ) {
             ReadResizeMode( *NanUtf8String( args[2] ), geometry, resizeType);
           }
@@ -1481,8 +1511,8 @@ namespace NodeMagick {
               geometry = *NanUtf8String( size );
             }
           } else if ( options->Has(widthSym) && options->Has(heightSym) ) {
-            geometry.width( options->Get(widthSym)->Int32Value() );
-            geometry.height( options->Get(heightSym)->Int32Value() );
+            geometry.width( options->Get(widthSym)->Uint32Value() );
+            geometry.height( options->Get(heightSym)->Uint32Value() );
           }
           if ( options->Has(modeSym) )
             ReadResizeMode( *NanUtf8String( options->Get(modeSym) ), geometry, resizeType);
