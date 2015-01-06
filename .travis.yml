@@ -3,5 +3,10 @@ node_js:
   - "0.11"
   - "0.10"
 before_install:
- - wget https://launchpad.net/ubuntu/+archive/primary/+files/libmagick%2B%2B-6.q16-5_6.8.9.9-5_amd64.deb
- - sudo dpkg -i libmagick++-6.q16-5_6.8.9.9-5_amd64.deb
+  - wget http://www.imagemagick.org/download/releases/ImageMagick-6.8.7-10.tar.bz2
+  - tar xf ImageMagick-6.8.7-10.tar.bz2
+  - cd ImageMagick*
+  - ./configure --prefix=/usr
+  - make
+  - sudo make install
+  - cd ..
