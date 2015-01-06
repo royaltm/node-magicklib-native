@@ -1,6 +1,5 @@
 language: node_js
 node_js:
-  - "0.11"
   - "0.10"
 env: TAP_TIMEOUT=120
 before_install:
