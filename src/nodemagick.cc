@@ -28,6 +28,10 @@ namespace NodeMagick {
   Persistent<String> sigmaSym;
   Persistent<String> radiusSym;
   Persistent<String> gaussianSym;
+  Persistent<String> widthSym;
+  Persistent<String> heightSym;
+  Persistent<String> sizeSym;
+  Persistent<String> modeSym;
 
   //Persistent<Function> bufferFunction;
 
@@ -97,6 +101,10 @@ namespace NodeMagick {
     sigmaSym      = NODE_PSYMBOL("sigma");
     radiusSym     = NODE_PSYMBOL("radius");
     gaussianSym   = NODE_PSYMBOL("gaussian");
+    widthSym      = NODE_PSYMBOL("width");
+    heightSym     = NODE_PSYMBOL("height");
+    sizeSym       = NODE_PSYMBOL("size");
+    modeSym       = NODE_PSYMBOL("mode");
     // NanAssignPersistent(bufferFunction, Local<Function>::Cast(NanGetCurrentContext()->Global()->Get(NanNew<String>("Buffer"))));
     Image::Init(exports);
     Color::Init(exports);

@@ -12,6 +12,10 @@ namespace NodeMagick {
 
   using namespace std;
 
+  typedef enum {
+    ResizeFilter, ResizeSample, ResizeScale
+  } ResizeType;
+
   class ImageFilterException: public exception {
     public:
       virtual const char* what(void) const throw() {
@@ -311,10 +315,11 @@ namespace NodeMagick {
   class ImageResizeJob : public ImageProcessJob {
     public:
       ImageResizeJob(void);
-      void Setup(Magick::Geometry& geometry_);
+      void Setup(Magick::Geometry& geometry_, ResizeType type_);
       void ProcessImage(Image *image_);
     private:
       Magick::Geometry geometry;
+      ResizeType type;
   };
 
   class ImageRestoreJob : public ImageProcessJob {

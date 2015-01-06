@@ -405,20 +405,32 @@ test("image.reset", function (t) {
 
 test("image.resize", function (t) {
   var im = new Image({src: blobImage, autoCopy: true, autoClose: false});
-  t.plan(2 + 6*2*2 + 10*2*2 + 7*2*2 + 7*2*2);
+  t.plan(2 + 12*2*3 + 20*2*2 + 14*2*2 + 14*2*2 + 6*2*4 + 6*2*4);
   t.deepEqual(im.size(), [ 113, 150 ])
   t.deepEqual(im.page,   "113x150");
+  var histogram0 = im.histogram()
+    , histogramFilter
+    , histogramScale
+    , histogramSample;
   [
     im.resize.bind(im, 200, 200),
     im.resize.bind(im, 200, 200, "aspectfit"),
     im.resize.bind(im, [200, 200]),
     im.resize.bind(im, [200, 200], "aspectfit"),
     im.resize.bind(im, "200x200"),
-    im.resize.bind(im, "200x200", "aspectfit")
+    im.resize.bind(im, "200x200", "aspectfit"),
+    im.resize.bind(im, {width: 200, height: 200}),
+    im.resize.bind(im, {width: 200, height: 200, mode: "aspectfit"}),
+    im.resize.bind(im, {size: [200, 200]}),
+    im.resize.bind(im, {size: [200, 200], mode: "aspectfit"}),
+    im.resize.bind(im, {size: "200x200"}),
+    im.resize.bind(im, {size: "200x200", mode: "aspectfit"}),
   ].forEach(function(method) {
     syncAsync(method, function(err, im) {
       t.strictEqual(im.page               , "151x200")
       t.deepEqual(im.size()               , [151,200])
+      histogramFilter = im.histogram()
+      t.ok(histogramFilter.length > histogram0.length)
     });
   });
   [
@@ -431,7 +443,17 @@ test("image.resize", function (t) {
     im.resize.bind(im, "200x200!"),
     im.resize.bind(im, "200x200", "fill"),
     im.resize.bind(im, "200x200", "noaspect"),
-    im.resize.bind(im, "200x200", "!")
+    im.resize.bind(im, "200x200", "!"),
+    im.resize.bind(im, {width: 200, height: 200, mode: "fill"}),
+    im.resize.bind(im, {width: 200, height: 200, mode: "noaspect"}),
+    im.resize.bind(im, {width: 200, height: 200, mode: "!"}),
+    im.resize.bind(im, {size: [200, 200], mode: "fill"}),
+    im.resize.bind(im, {size: [200, 200], mode: "noaspect"}),
+    im.resize.bind(im, {size: [200, 200], mode: "!"}),
+    im.resize.bind(im, {size: "200x200!"}),
+    im.resize.bind(im, {size: "200x200", mode: "fill"}),
+    im.resize.bind(im, {size: "200x200", mode: "noaspect"}),
+    im.resize.bind(im, {size: "200x200", mode: "!"})
   ].forEach(function(method) {
     syncAsync(method, function(err, im) {
       t.strictEqual(im.page               , "200x200")
@@ -445,7 +467,14 @@ test("image.resize", function (t) {
     im.resize.bind(im, [200, 200], ">"),
     im.resize.bind(im, "200x200>"),
     im.resize.bind(im, "200x200", "larger"),
-    im.resize.bind(im, "200x200", ">")
+    im.resize.bind(im, "200x200", ">"),
+    im.resize.bind(im, {width: 200, height: 200, mode: "larger"}),
+    im.resize.bind(im, {width: 200, height: 200, mode: ">"}),
+    im.resize.bind(im, {size: [200, 200], mode: "larger"}),
+    im.resize.bind(im, {size: [200, 200], mode: ">"}),
+    im.resize.bind(im, {size: "200x200>"}),
+    im.resize.bind(im, {size: "200x200", mode: "larger"}),
+    im.resize.bind(im, {size: "200x200", mode: ">"})
   ].forEach(function(method) {
     syncAsync(method, function(err, im) {
       t.strictEqual(im.page               , "113x150")
@@ -459,11 +488,50 @@ test("image.resize", function (t) {
     im.resize.bind(im, [100, 100], "<"),
     im.resize.bind(im, "100x100<"),
     im.resize.bind(im, "100x100", "smaller"),
-    im.resize.bind(im, "100x100", "<")
+    im.resize.bind(im, "100x100", "<"),
+    im.resize.bind(im, {width: 100, height: 100, mode: "smaller"}),
+    im.resize.bind(im, {width: 100, height: 100, mode: "<"}),
+    im.resize.bind(im, {size: [100, 100], mode: "smaller"}),
+    im.resize.bind(im, {size: [100, 100], mode: "<"}),
+    im.resize.bind(im, {size: "100x100<"}),
+    im.resize.bind(im, {size: "100x100", mode: "smaller"}),
+    im.resize.bind(im, {size: "100x100", mode: "<"})
   ].forEach(function(method) {
     syncAsync(method, function(err, im) {
       t.strictEqual(im.page               , "113x150")
       t.deepEqual(im.size()               , [113,150])
+    });
+  });
+  [
+    im.resize.bind(im, 200, 200, "scale"),
+    im.resize.bind(im, [200, 200], "scale"),
+    im.resize.bind(im, "200x200", "scale"),
+    im.resize.bind(im, {width: 200, height: 200, mode: "scale"}),
+    im.resize.bind(im, {size: [200, 200], mode: "scale"}),
+    im.resize.bind(im, {size: "200x200", mode: "scale"})
+  ].forEach(function(method) {
+    syncAsync(method, function(err, im) {
+      t.strictEqual(im.page               , "151x200")
+      t.deepEqual(im.size()               , [151,200])
+      histogramScale = im.histogram()
+      t.ok(histogramScale.length < histogramFilter.length)
+      t.ok(histogramScale.length > histogram0.length)
+    });
+  });
+  [
+    im.resize.bind(im, 200, 200, "sample"),
+    im.resize.bind(im, [200, 200], "sample"),
+    im.resize.bind(im, "200x200", "sample"),
+    im.resize.bind(im, {width: 200, height: 200, mode: "sample"}),
+    im.resize.bind(im, {size: [200, 200], mode: "sample"}),
+    im.resize.bind(im, {size: "200x200", mode: "sample"})
+  ].forEach(function(method) {
+    syncAsync(method, function(err, im) {
+      t.strictEqual(im.page               , "151x200")
+      t.deepEqual(im.size()               , [151,200])
+      histogramSample = im.histogram()
+      t.ok(histogramSample.length < histogramScale.length)
+      t.ok(histogramSample.length == histogram0.length)
     });
   });
 });

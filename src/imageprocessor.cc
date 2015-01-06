@@ -435,8 +435,8 @@ namespace NodeMagick {
   Local<Value> ImagePingJob::ReturnedValue() {
     NanEscapableScope();
     Local<Object> result( NanNew<Array>(2) );
-    result->Set( 0, NanNew<Integer>(columns) );
-    result->Set( 1, NanNew<Integer>(rows) );
+    result->Set( 0, NanNew<Integer>( (uint32_t) columns) );
+    result->Set( 1, NanNew<Integer>( (uint32_t) rows) );
     return NanEscapeScope(result);
   }
 
@@ -605,13 +605,23 @@ namespace NodeMagick {
 
   ImageResizeJob::ImageResizeJob() : ImageProcessJob() {}
 
-  void ImageResizeJob::Setup(Magick::Geometry& geometry_) {
+  void ImageResizeJob::Setup(Magick::Geometry& geometry_, ResizeType type_) {
     geometry = geometry_;
+    type = type_;
     ImageProcessJob::Setup();
   }
 
   void ImageResizeJob::ProcessImage(Image *image) {
-    image->GetMagickImage()->resize(geometry);
+    switch(type) {
+      case ResizeScale:
+        image->GetMagickImage()->scale(geometry);
+        break;
+      case ResizeSample:
+        image->GetMagickImage()->sample(geometry);
+        break;
+      default:
+        image->GetMagickImage()->resize(geometry);
+    }
   }
 
   /* ImageRestoreJob */

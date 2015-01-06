@@ -842,7 +842,7 @@ namespace NodeMagick {
   }
 
   /**
-   * Filter change for resizing
+   * Filter for resize
    * 
    * image.filter(filter[, callback(err, image)])
    *
@@ -1355,6 +1355,9 @@ namespace NodeMagick {
     "!%", "nopercent" ,
     "@" , "limit"     , "limitpixels"  ,
     "!@", "nolimit"   , "nolimitpixels",
+          "filter"    ,
+          "sample"    ,
+          "scale"     ,
     NULL
   };
 
@@ -1370,9 +1373,12 @@ namespace NodeMagick {
     '=', '=',
     '@', '@', '@',
     '$', '$', '$',
+    'f',
+    'm',
+    'c'
   };
 
-  static NAN_INLINE void AlterGeometryMode(Magick::Geometry &geometry, char *mode) {
+  static NAN_INLINE void ReadResizeMode(char *mode, Magick::Geometry &geometry, ResizeType &resizeType) {
     int tag = FindTag(Image::ResizeTags, mode);
     while ( tag >= 0) {
       switch(Image::ResizeTagValues[tag]) {
@@ -1387,21 +1393,22 @@ namespace NodeMagick {
         case '=': geometry.percent(false);                          break;
         case '@': geometry.limitPixels(true);                       break;
         case '$': geometry.limitPixels(false);                      break;
+        case 'f': resizeType = ResizeFilter;                        break;
+        case 'm': resizeType = ResizeSample;                        break;
+        case 'c': resizeType = ResizeScale;                         break;
       }
       tag = FindNextTag(Image::ResizeTags);
     }
   }
 
   /**
-   * Resize image applying filter
+   * Resize image
    *
    * image.resize(width, height[, mode="aspectfit"][, callback(err, image)])
    * image.resize(size[, mode="aspectfit"][, callback(err, image)])
-   * image.resize(geometry[, callback(err, image)])
-   * image.resize(geometry[, mode][, callback(err, image)])
+   * image.resize(options[, callback(err, image)])
    *
-   * size: an Array of [width, height] or [width, height, x, y ]
-   * geometry: geometry string
+   * size: an Array of [width, height] or geometry string, e.g.: "100x100^"
    *
    * mode:
    *   - "#" or "aspectfit"          Resize the image based on the largest fitting dimenstion (default)
@@ -1415,13 +1422,25 @@ namespace NodeMagick {
    *   - "!%" or "nopercent"         Don't interpret width & height as percentages
    *   - "@" or "limit"              Resize using a pixel area count limit
    *   - "!@" or "nolimit"           Don't resize using a pixel area count limit
+   *   - "filter"                    Use resize filter (default)
+   *   - "sample"                    Use pixel sampling algorithm (no filters)
+   *   - "scale"                     Use simple ratio algorithm (no filters)
    *
-   * mode tags can be combined (separated by space, comma or (semi)colon)
+   * mode tags can be combined (separated by space, comma or (semi)colon),
+  *       e.g.: "scale aspectfill smaller"
+   *
+   * options:
+   *
+   *   - size: target size [witdth, height] or geometry string
+   *   - width: target width
+   *   - height: target height
+   *   - mode: resize mode
    **/
   NAN_METHOD(Image::Resize) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageResizeJob, resizer)
 
     if ( argc >= 1 && argc <= 3 ) {
+      ResizeType resizeType( ResizeFilter );
       int modeargindex = -1;
       if ( argc >= 2 ) {
         if ( args[argc - 1]->IsString() )
@@ -1431,32 +1450,49 @@ namespace NodeMagick {
         if ( args[0]->IsNumber() && args[1]->IsNumber() ) {
           Magick::Geometry geometry( args[0]->Int32Value(), args[1]->Int32Value() );
           if ( modeargindex == 2 ) {
-            AlterGeometryMode( geometry, *NanUtf8String( args[2] ) );
+            ReadResizeMode( *NanUtf8String( args[2] ), geometry, resizeType);
           }
-          resizer.Setup(geometry);
+          resizer.Setup( geometry, resizeType );
         }
       } else if ( argc == 1 ) {
         if ( args[0]->IsString() ) {
           Magick::Geometry geometry(*NanUtf8String(args[0]));
           if ( modeargindex == 1 ) {
-            AlterGeometryMode( geometry, *NanUtf8String( args[1] ) );
+            ReadResizeMode( *NanUtf8String( args[1] ), geometry, resizeType);
           }
-          resizer.Setup(geometry);
+          resizer.Setup( geometry, resizeType );
         } else if ( args[0]->IsArray() ) {
           Magick::Geometry geometry;
           Local<Array> size( args[0].As<Array>() );
           if ( SetGeometryFromV8Array( geometry, size ) ) {
             if ( modeargindex == 1 ) {
-              AlterGeometryMode( geometry, *NanUtf8String( args[1] ) );
+              ReadResizeMode( *NanUtf8String( args[1] ), geometry, resizeType);
             }
-            resizer.Setup( geometry );
+            resizer.Setup( geometry, resizeType );
           }
+        } else if ( args[0]->IsObject() ) {
+          Local<Object> options = args[0].As<Object>();
+          Magick::Geometry geometry;
+          if ( options->Has(sizeSym) ) {
+            Local<Value> size = options->Get(sizeSym);
+            if ( size->IsArray() ) {
+              SetGeometryFromV8Array( geometry, size.As<Array>() );
+            } else if ( size->IsString() ) {
+              geometry = *NanUtf8String( size );
+            }
+          } else if ( options->Has(widthSym) && options->Has(heightSym) ) {
+            geometry.width( options->Get(widthSym)->Int32Value() );
+            geometry.height( options->Get(heightSym)->Int32Value() );
+          }
+          if ( options->Has(modeSym) )
+            ReadResizeMode( *NanUtf8String( options->Get(modeSym) ), geometry, resizeType);
+          if ( geometry.isValid() )
+            resizer.Setup( geometry, resizeType );
         }
-
       }
     }
 
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageResizeJob, resizer, "resize()'s arguments should be string, 2 Numbers or callback");
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageResizeJob, resizer, "resize()'s arguments should be string, numbers or callback");
   }
 
   /**

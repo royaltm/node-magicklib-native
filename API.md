@@ -209,7 +209,7 @@ It's better to use streams, or blobs.
   color: string or Color object
 ```
 
-###Filter change for resizing
+###Filter for resize
 
 ```js
   
@@ -419,17 +419,15 @@ It's better to use streams, or blobs.
   page: geometry string or page description, e.g. "A4"
 ```
 
-###Resize image applying filter
+###Resize image
 
 ```js
  
   image.resize(width, height[, mode="aspectfit"][, callback(err, image)])
   image.resize(size[, mode="aspectfit"][, callback(err, image)])
-  image.resize(geometry[, callback(err, image)])
-  image.resize(geometry[, mode][, callback(err, image)])
+  image.resize(options[, callback(err, image)])
  
-  size: an Array of [width, height] or [width, height, x, y ]
-  geometry: geometry string
+  size: an Array of [width, height] or geometry string, e.g.: "100x100^"
  
   mode:
     - "#" or "aspectfit"          Resize the image based on the largest fitting dimenstion (default)
@@ -443,8 +441,18 @@ It's better to use streams, or blobs.
     - "!%" or "nopercent"         Don't interpret width & height as percentages
     - "@" or "limit"              Resize using a pixel area count limit
     - "!@" or "nolimit"           Don't resize using a pixel area count limit
+    - "filter"                    Use resize filter (default)
+    - "sample"                    Use pixel sampling algorithm (no filters)
+    - "scale"                     Use simple ratio algorithm (no filters)
  
-  mode tags can be combined (separated by space, comma or (semi)colon)
+  mode tags can be combined (separated by space, comma or (semi)colon),
+ 
+  options:
+ 
+    - size: target size [witdth, height] or geometry string
+    - width: target width
+    - height: target height
+    - mode: resize mode
 ```
 
 ###Strip image of profiles and comments
