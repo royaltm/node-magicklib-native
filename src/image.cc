@@ -1415,16 +1415,16 @@ namespace NodeMagick {
    *   - "^" or "aspectfill"         Resize the image based on the smallest fitting dimension
    *   - "!" or "noaspect" or "fill" Force exact size
    *   - ">" or "larger"             Resize only if larger than geometry
-   *   - "!>" or "nolarger"          Don't resize only if smaller than geometry
+   *   - "!>" or "nolarger"          Do not resize only if smaller than geometry
    *   - "<" or "smaller"            Resize only if smaller than geometry
-   *   - "!<" or "nosmaller"         Don't resize only if larger than geometry
+   *   - "!<" or "nosmaller"         Do not resize only if larger than geometry
    *   - "%" or "percent"            Interpret width & height as percentages
-   *   - "!%" or "nopercent"         Don't interpret width & height as percentages
+   *   - "!%" or "nopercent"         Do not interpret width & height as percentages
    *   - "@" or "limit"              Resize using a pixel area count limit
-   *   - "!@" or "nolimit"           Don't resize using a pixel area count limit
+   *   - "!@" or "nolimit"           Do not resize using a pixel area count limit
    *   - "filter"                    Use resize filter (default)
-   *   - "sample"                    Use pixel sampling algorithm (no filters)
-   *   - "scale"                     Use simple ratio algorithm (no filters)
+   *   - "sample"                    Use pixel sampling algorithm (ignore filters)
+   *   - "scale"                     Use simple ratio algorithm (ignore filters)
    *
    * mode tags can be combined (separated by space, comma or (semi)colon),
   *       e.g.: "scale aspectfill smaller"
