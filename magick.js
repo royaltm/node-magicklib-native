@@ -125,7 +125,12 @@ var magick = module.exports = require(__dirname + '/build/Release/magicklib.node
   var Readable = stream.Readable;
 
   function Reader(image, options) {
-    this._image = image;
+    var self = this;
+    this._image = image.write(function(err, data) {
+      if (err) return self.emit('error', err);
+      self._image = null;
+      self.push(data);
+    });
 
     Readable.call(this, options);
   }
@@ -133,17 +138,8 @@ var magick = module.exports = require(__dirname + '/build/Release/magicklib.node
   util.inherits(Reader, Readable);
 
   Reader.prototype._read = function() {
-    var image = this._image
-      , self = this;
-    if (image) {
-      image.write(function(err, data) {
-        if (err) return self.emit('error', err);
-        self.push(data);
-      });
-      this._image = image = null;
-    } else {
-      self.push(null);
-    }
+    if (this._image === null)
+      this.push(null);
   };
 
   /**
