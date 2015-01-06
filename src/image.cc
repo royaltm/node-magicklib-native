@@ -277,6 +277,7 @@ namespace NodeMagick {
    * color:       color string or Color object instance
    * image:       Image object to clone
    * file:        file name to synchronously load from
+   *              (not recommended, uses Magick++ blocking I/O)
    *
    * options:
    *
@@ -1017,7 +1018,7 @@ namespace NodeMagick {
    * image.ping(file|buffer[, callback(err, size)])
    *
    * buffer: a Buffer object to read image from (recommended)
-   * file: a file to read from (not recommended, uses Magick++ threaded I/O)
+   * file: a file to read from (not recommended, uses Magick++ blocking I/O)
    * size: an Array of [width, height]
    *
    * todo: implement async read for file
@@ -1284,7 +1285,7 @@ namespace NodeMagick {
    * image.read(file|buffer[, callback(err, image)])
    *
    * buffer: a Buffer object to read image from (recommended)
-   * file: a file to read from (not recommended, uses Magick++ threaded I/O)
+   * file: a file to read from (not recommended, uses Magick++ blocking I/O)
    *
    * todo: implement async read for file
    **/
@@ -1530,7 +1531,7 @@ namespace NodeMagick {
    * image.write(file[, callback(err, image)])
    * image.write([callback(err, buffer)])
    *
-   * file: a file to write to (not recommended, uses Magick++ threaded I/O)
+   * file: a file to write to (not recommended, uses Magick++ blocking I/O)
    *
    * without file or if file == null the result is buffer
    *

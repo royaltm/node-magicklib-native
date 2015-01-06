@@ -16,7 +16,11 @@ Invoking method without callback either executes synchronously or adds command t
 Image method will perform synchronously if: `image.isSync == true`
 
 The synchronous mode is mainly for performing image operation while loading modules or to use in repl.
-The preferred way of dealing with images in node should be always asynchronous.
+The preferred way of dealing with images in nodejs should always be asynchronous.
+
+The direct file operations, such as in read(file) or new Image(file) should be avoided until they are
+implemented in node-friendly way. For now they use blocking I/O from Magick++ calls.
+It's better to use streams, or blobs.
 
 
 ##magick
@@ -53,6 +57,7 @@ The preferred way of dealing with images in node should be always asynchronous.
   color:       color string or Color object instance
   image:       Image object to clone
   file:        file name to synchronously load from
+               (not recommended, uses Magick++ blocking I/O)
  
   options:
  
@@ -287,7 +292,7 @@ The preferred way of dealing with images in node should be always asynchronous.
   image.ping(file|buffer[, callback(err, size)])
  
   buffer: a Buffer object to read image from (recommended)
-  file: a file to read from (not recommended, uses Magick++ threaded I/O)
+  file: a file to read from (not recommended, uses Magick++ blocking I/O)
   size: an Array of [width, height]
  
   todo: implement async read for file
@@ -398,7 +403,7 @@ The preferred way of dealing with images in node should be always asynchronous.
   image.read(file|buffer[, callback(err, image)])
  
   buffer: a Buffer object to read image from (recommended)
-  file: a file to read from (not recommended, uses Magick++ threaded I/O)
+  file: a file to read from (not recommended, uses Magick++ blocking I/O)
  
   todo: implement async read for file
 ```
@@ -477,7 +482,7 @@ The preferred way of dealing with images in node should be always asynchronous.
   image.write(file[, callback(err, image)])
   image.write([callback(err, buffer)])
  
-  file: a file to write to (not recommended, uses Magick++ threaded I/O)
+  file: a file to write to (not recommended, uses Magick++ blocking I/O)
  
   without file or if file == null the result is buffer
  

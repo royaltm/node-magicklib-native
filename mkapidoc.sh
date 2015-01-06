@@ -19,7 +19,11 @@ Invoking method without callback either executes synchronously or adds command t
 Image method will perform synchronously if: `image.isSync == true`
 
 The synchronous mode is mainly for performing image operation while loading modules or to use in repl.
-The preferred way of dealing with images in node should be always asynchronous.
+The preferred way of dealing with images in nodejs should always be asynchronous.
+
+The direct file operations, such as in read(file) or new Image(file) should be avoided until they are
+implemented in node-friendly way. For now they use blocking I/O from Magick++ calls.
+It's better to use streams, or blobs.
 
 EOF
 
