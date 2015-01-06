@@ -171,10 +171,17 @@ It's better to use streams, or blobs.
  
   image.crop(width, height, x, y[, callback(err, image)])
   image.crop(size[, callback(err, image)])
-  image.crop(geometry[, callback(err, image)])
+  image.crop(options[, callback(err, image)])
  
-  size: an Array of [width, height, x, y]
-  geometry: geometry string
+  size: an Array of [width, height, x, y] or geometry string
+ 
+  options:
+ 
+    - size: crop size [witdth, height, x, y] or geometry string
+    - width: crop width
+    - height: crop height
+    - x: crop column offset
+    - y: crop row offset
 ```
 
 ###End batch
@@ -199,14 +206,25 @@ It's better to use streams, or blobs.
 
 ```js
  
-  image.extent(width, height[, gravity="center"][, color="transparent"][, callback(err, image)])
-  image.extent(width, height, x, y[, color="transparent"][, callback(err, image)])
-  image.extent(size[, gravity="ignore"][, color="transparent"][, callback(err, image)])
-  image.extent(geometry[, gravity="ignore"][, color="transparent"][, callback(err, image)])
+  image.extent(width, height[, gravity="center"][, color=background][, callback(err, image)])
+  image.extent(width, height, x, y[, color=background][, callback(err, image)])
+  image.extent(size[, gravity="ignore"][, color=background][, callback(err, image)])
+  image.extent(options[, callback(err, image)])
  
   size: an Array of [width, height] or [width, height, x, y]
-  geometry: geometry string
+        or geometry string
   color: string or Color object
+  gravity: gravity string, e.g.: "northwest"
+ 
+  options:
+ 
+    - size: extent size [witdth, height] or geometry string
+    - width: extent width
+    - height: extent height
+    - x: extent column offset
+    - y: extent row offset
+    - gravity: gravity string, e.g.: "east"
+    - color: string or Color object
 ```
 
 ###Filter for resize
