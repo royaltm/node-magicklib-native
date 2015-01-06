@@ -139,7 +139,7 @@ test("image.crop", function (t) {
 
 test("image.extent", function (t) {
   var im = new Image({src: blobTransparent, autoCopy: true, autoClose: false, background: "transparent"})
-  t.plan(9 + 7*2*11 + 6*2*10 + 6*2*11);
+  t.plan(9 + 14*2*11 + 12*2*10 + 12*2*11 + 28*2*12);
   t.deepEqual(im.size()               , [ 16, 16 ])
   t.deepEqual(im.color(0,    0).rgba(), [ 0, 0, 0, 1 ])
   t.deepEqual(im.color(1,    1).rgba(), [ 0, 0, 0, 0 ])
@@ -156,7 +156,14 @@ test("image.extent", function (t) {
     im.extent.bind(im, [14, 14, 1, 1]),
     im.extent.bind(im, [14, 14], "Center"),
     im.extent.bind(im, "14x14+1+1"),
-    im.extent.bind(im, "14x14", "center")
+    im.extent.bind(im, "14x14", "center"),
+    im.extent.bind(im, {width: 14, height: 14}),
+    im.extent.bind(im, {width: 14, height: 14, gravity: "centeR"}),
+    im.extent.bind(im, {width: 14, height: 14, x: 1, y: 1}),
+    im.extent.bind(im, {size: [14, 14, 1, 1]}),
+    im.extent.bind(im, {size: [14, 14], gravity: "Center"}),
+    im.extent.bind(im, {size: "14x14+1+1"}),
+    im.extent.bind(im, {size: "14x14", gravity: "center"})
   ].forEach(function(method) {
     syncAsync(method, function(err, im) {
       t.strictEqual(im.page               , "14x14")
@@ -178,7 +185,13 @@ test("image.extent", function (t) {
     im.extent.bind(im, [14, 14, 0, 0]),
     im.extent.bind(im, [14, 14], "NORTHwest"),
     im.extent.bind(im, "14x14+0+0"),
-    im.extent.bind(im, "14x14", "nortHWesT")
+    im.extent.bind(im, "14x14", "nortHWesT"),
+    im.extent.bind(im, {width: 14, height: 14, gravity: "nOrThWeST"}),
+    im.extent.bind(im, {width: 14, height: 14, x: 0, y: 0}),
+    im.extent.bind(im, {size: [14, 14, 0, 0]}),
+    im.extent.bind(im, {size: [14, 14], gravity: "NORTHwest"}),
+    im.extent.bind(im, {size: "14x14+0+0"}),
+    im.extent.bind(im, {size: "14x14", gravity: "nortHWesT"})
   ].forEach(function(method) {
     syncAsync(method, function(err, im) {
       t.strictEqual(im.page               , "14x14")
@@ -199,7 +212,13 @@ test("image.extent", function (t) {
     im.extent.bind(im, [14, 14, 2, 1]),
     im.extent.bind(im, [14, 14], "east"),
     im.extent.bind(im, "14x14+2+1"),
-    im.extent.bind(im, "14x14", "eASt")
+    im.extent.bind(im, "14x14", "eASt"),
+    im.extent.bind(im, {width: 14, height: 14, gravity: "EAST"}),
+    im.extent.bind(im, {width: 14, height: 14, x: 2, y: 1}),
+    im.extent.bind(im, {size: [14, 14, 2, 1]}),
+    im.extent.bind(im, {size: [14, 14], gravity: "east"}),
+    im.extent.bind(im, {size: "14x14+2+1"}),
+    im.extent.bind(im, {size: "14x14", gravity: "eASt"})
   ].forEach(function(method) {
     syncAsync(method, function(err, im) {
       t.strictEqual(im.page               , "14x14")
@@ -213,6 +232,51 @@ test("image.extent", function (t) {
       t.deepEqual(im.color(13,  13).rgba(), [ 0, 0, 0, 1 ])
       t.deepEqual(im.color(14,  14).rgba(), [ 0, 0, 0, 1 ])
       t.deepEqual(im.color(15,  15).rgba(), [ 0, 0, 0, 1 ])
+    });
+  });
+  [
+    im.extent.bind(im, 18, 18, "#00FF00"),
+    im.extent.bind(im, 18, 18, Color.RGB(0,1,0)),
+    im.extent.bind(im, 18, 18, "center", "#00FF00"),
+    im.extent.bind(im, 18, 18, "center", Color.RGB(0,1,0)),
+    im.extent.bind(im, 18, 18, -1, -1, "#00FF00"),
+    im.extent.bind(im, 18, 18, -1, -1, Color.RGB(0,1,0)),
+    im.extent.bind(im, [18, 18, -1, -1], "#00FF00"),
+    im.extent.bind(im, [18, 18, -1, -1], Color.RGB(0,1,0)),
+    im.extent.bind(im, [18, 18], "center", "#00FF00"),
+    im.extent.bind(im, [18, 18], "center", Color.RGB(0,1,0)),
+    im.extent.bind(im, "18x18-1-1", "#00FF00"),
+    im.extent.bind(im, "18x18-1-1", Color.RGB(0,1,0)),
+    im.extent.bind(im, "18x18", "center", "#00FF00"),
+    im.extent.bind(im, "18x18", "center", Color.RGB(0,1,0)),
+    im.extent.bind(im, {width: 18, height: 18, color: "#00FF00"}),
+    im.extent.bind(im, {width: 18, height: 18, color: Color.RGB(0,1,0)}),
+    im.extent.bind(im, {width: 18, height: 18, gravity: "center", color: "#00FF00"}),
+    im.extent.bind(im, {width: 18, height: 18, gravity: "center", color: Color.RGB(0,1,0)}),
+    im.extent.bind(im, {width: 18, height: 18, x: -1, y: -1, color: "#00FF00"}),
+    im.extent.bind(im, {width: 18, height: 18, x: -1, y: -1, color: Color.RGB(0,1,0)}),
+    im.extent.bind(im, {size: [18, 18, -1, -1], color: "#00FF00"}),
+    im.extent.bind(im, {size: [18, 18, -1, -1], color: Color.RGB(0,1,0)}),
+    im.extent.bind(im, {size: [18, 18], gravity: "center", color: "#00FF00"}),
+    im.extent.bind(im, {size: [18, 18], gravity: "center", color: Color.RGB(0,1,0)}),
+    im.extent.bind(im, {size: "18x18-1-1", color: "#00FF00"}),
+    im.extent.bind(im, {size: "18x18-1-1", color: Color.RGB(0,1,0)}),
+    im.extent.bind(im, {size: "18x18", gravity: "center", color: "#00FF00"}),
+    im.extent.bind(im, {size: "18x18", gravity: "center", color: Color.RGB(0,1,0)})
+  ].forEach(function(method) {
+    syncAsync(method, function(err, im) {
+      t.strictEqual(im.page               , "18x18")
+      t.deepEqual(im.size()               , [ 18, 18 ])
+      t.deepEqual(im.color(0,    0).rgba(), [ 0, 1, 0, 0 ])
+      t.deepEqual(im.color(1,    1).rgba(), [ 0, 1, 0, 0 ])
+      t.deepEqual(im.color(2,    2).rgba(), [ 0, 0, 0, 0 ])
+      t.deepEqual(im.color(7,    7).rgba(), [ 0, 1, 0, 0 ])
+      t.deepEqual(im.color(8,    8).rgba(), [ 1, 1, 1, 0 ])
+      t.deepEqual(im.color(9,    9).rgba(), [ 1, 1, 1, 0 ])
+      t.deepEqual(im.color(10,  10).rgba(), [ 0, 1, 0, 0 ])
+      t.deepEqual(im.color(15,  15).rgba(), [ 0, 0, 0, 0 ])
+      t.deepEqual(im.color(16,  16).rgba(), [ 0, 1, 0, 0 ])
+      t.deepEqual(im.color(17,  17).rgba(), [ 0, 1, 0, 0 ])
     });
   });
 });

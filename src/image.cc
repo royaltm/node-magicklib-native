@@ -784,14 +784,25 @@ namespace NodeMagick {
   /**
    * Extent image
    *
-   * image.extent(width, height[, gravity="center"][, color="transparent"][, callback(err, image)])
-   * image.extent(width, height, x, y[, color="transparent"][, callback(err, image)])
-   * image.extent(size[, gravity="ignore"][, color="transparent"][, callback(err, image)])
-   * image.extent(geometry[, gravity="ignore"][, color="transparent"][, callback(err, image)])
+   * image.extent(width, height[, gravity="center"][, color=background][, callback(err, image)])
+   * image.extent(width, height, x, y[, color=background][, callback(err, image)])
+   * image.extent(size[, gravity="ignore"][, color=background][, callback(err, image)])
+   * image.extent(options[, callback(err, image)])
    *
    * size: an Array of [width, height] or [width, height, x, y]
-   * geometry: geometry string
+   *       or geometry string
    * color: string or Color object
+   * gravity: gravity string, e.g.: "northwest"
+   *
+   * options:
+   *
+   *   - size: extent size [witdth, height] or geometry string
+   *   - width: extent width
+   *   - height: extent height
+   *   - x: extent column offset
+   *   - y: extent row offset
+   *   - gravity: gravity string, e.g.: "east"
+   *   - color: string or Color object
    **/
   NAN_METHOD(Image::Extent) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageExtentJob, extender)
@@ -829,16 +840,36 @@ namespace NodeMagick {
         }
       }
       Magick::Geometry geometry;
-      if ( args[0]->IsString() ) {
-        if ( argc == 1 ) {
+      if ( argc == 1 ) {
+        if ( args[0]->IsString() ) {
           geometry = *NanUtf8String(args[0]);
-          if ( ! geometry.isValid() )
-            return NanThrowError("bad geometry string");
-        }
-      } else if ( args[0]->IsArray() ) {
-        if ( argc == 1 ) {
-          Local<Array> size( args[0].As<Array>() );
-          SetGeometryFromV8Array( geometry, size );
+        } else if ( args[0]->IsArray() ) {
+          SetGeometryFromV8Array( geometry, args[0].As<Array>() );
+        } else if ( args[0]->IsObject() ) {
+          Local<Object> options = args[0].As<Object>();
+          if ( options->Has(sizeSym) ) {
+            Local<Value> size = options->Get(sizeSym);
+            if ( size->IsArray() ) {
+              SetGeometryFromV8Array( geometry, size.As<Array>() );
+            } else if ( size->IsString() ) {
+              geometry = *NanUtf8String( size );
+            }
+          } else if ( options->Has(widthSym) && options->Has(heightSym) ) {
+            geometry.width( options->Get(widthSym)->Uint32Value() );
+            geometry.height( options->Get(heightSym)->Uint32Value() );
+            gravity = Magick::CenterGravity;
+          }
+          if ( options->Has(xSym) && options->Has(ySym) ) {
+            geometry.xOff( options->Get(xSym)->Int32Value() );
+            geometry.yOff( options->Get(ySym)->Int32Value() );
+            gravity = Magick::ForgetGravity;
+          } else if ( options->Has(gravitySym) ) {
+            gravity = GetGravityFromString( *NanUtf8String( options->Get(gravitySym) ) );
+          }
+          if ( options->Has(colorSym) ) {
+            if ( ! SetColorFromV8Value( color, options->Get(colorSym), &errmsg ) )
+              return NanThrowError(errmsg);
+          }
         }
       } else if ( argc == 2 || argc == 4 ) {
         if ( args[0]->IsNumber() && args[1]->IsNumber() ) {

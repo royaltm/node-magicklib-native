@@ -34,6 +34,7 @@ namespace NodeMagick {
   Persistent<String> ySym;
   Persistent<String> sizeSym;
   Persistent<String> modeSym;
+  Persistent<String> gravitySym;
 
   //Persistent<Function> bufferFunction;
 
@@ -109,7 +110,10 @@ namespace NodeMagick {
     ySym          = NODE_PSYMBOL("y");
     sizeSym       = NODE_PSYMBOL("size");
     modeSym       = NODE_PSYMBOL("mode");
+    gravitySym    = NODE_PSYMBOL("gravity");
+
     // NanAssignPersistent(bufferFunction, Local<Function>::Cast(NanGetCurrentContext()->Global()->Get(NanNew<String>("Buffer"))));
+
     Image::Init(exports);
     Color::Init(exports);
     NODE_SET_METHOD(exports, "limit", Limit);
