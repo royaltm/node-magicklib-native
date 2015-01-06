@@ -9,12 +9,16 @@ var ben       = require('ben')
 ,   debug     = 0
 ,   fs        = require('fs')
 ,   ntimes    = 20
-,   ptimes    = 10
+,   ptimes    = 20
 ;
 // console.log("memory", mb(magick.limit("memory", 10000000)))
-console.log("thread: ", magick.limit("thread"))
-console.log("memory: ", mb(magick.limit("memory")))
-console.log("disk:   ", mb(magick.limit("disk")))
+console.log("thread:   ", magick.limit("thread"))
+console.log("memory:   ", mb(magick.limit("memory")))
+console.log("disk:     ", mb(magick.limit("disk")))
+
+console.log("loops:    ", ntimes)
+console.log("parallel: ", ptimes)
+console.log("total:    ", ntimes*ptimes)
 
 var files  = process.argv.slice(2)
   , bodies = [];
@@ -114,31 +118,6 @@ function resize_im_native(callback) {
     ], next);
   }, callback);
 }
-/* api-optimized */
-function resize_mi_lib_opt(callback) {
-  async.map(bodies, function(body, next) {
-    var togo = 3;
-    function written() { if (!--togo) next(); }
-    var im = new Image({batch: true})
-      .read(body)
-      .format('JPEG')
-      .filter('Lagrange')
-      .strip()
-      .quality(80)
-      .properties({autoCopy: true})
-      .resize(100,100);
-      im.pipe(fs.createWriteStream("./out.mi-lib-opt-1.jpg")).on('finish', written);
-      // .write(written)
-      im.restore()
-      .resize(200,200)
-      .pipe(fs.createWriteStream("./out.mi-lib-opt-2.jpg")).on('finish', written);
-      // .write(written)
-      im.restore()
-      .resize(300,300)
-      .pipe(fs.createWriteStream("./out.mi-lib-opt-3.jpg")).on('finish', written);
-      // .write(written)
-  }, callback);
-}
 /* naive test */
 function resize_mi_lib_naiv(callback) {
   async.map(bodies, function(body, next) {
@@ -177,6 +156,31 @@ function resize_mi_lib_naiv(callback) {
         //.write(next)
       }
     ], next);
+  }, callback);
+}
+/* concurrency-optimized */
+function resize_mi_lib_opt(callback) {
+  async.map(bodies, function(body, next) {
+    var togo = 3;
+    function written() { if (!--togo) next(); }
+    var im = new Image({batch: true})
+      .read(body)
+      .format('JPEG')
+      .filter('Lagrange')
+      .strip()
+      .quality(80)
+      .properties({autoCopy: true})
+      .resize(100,100);
+      im.pipe(fs.createWriteStream("./out.mi-lib-opt-1.jpg")).on('finish', written);
+      // .write(written)
+      im.restore()
+      .resize(200,200)
+      .pipe(fs.createWriteStream("./out.mi-lib-opt-2.jpg")).on('finish', written);
+      // .write(written)
+      im.restore()
+      .resize(300,300)
+      .pipe(fs.createWriteStream("./out.mi-lib-opt-3.jpg")).on('finish', written);
+      // .write(written)
   }, callback);
 }
 
@@ -245,8 +249,3 @@ function mem(info) {
 function mb(value) {
   return (value / 1000000).toFixed(1) + 'MB';
 }
-
-/*
-resize:     16.09ms per iteration
-resize_native: 0.89ms per iteration
-*/
