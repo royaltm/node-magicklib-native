@@ -16,7 +16,7 @@ Most Image methods return image (this) object.
 ##magick
 
 
-Magick resource control
+###Magick resource control
 
 ```js
  
@@ -31,7 +31,7 @@ Magick resource control
 ##magick.Image
 
 
-Image object factory
+###Image object factory
 
 ```js
  
@@ -63,7 +63,7 @@ Image object factory
     - fuzz:       set color fuzz, default: 0
 ```
 
-Begin batch mode
+###Begin batch mode
 
 ```js
  
@@ -74,13 +74,11 @@ Begin batch mode
  
     - batch: set persistent batch mode, default: false
  
-  if callback is provided executes batch otherwise clears batch tail from jobs
- 
   if batch or options argument is provided this function
   immediately changes batch image property.
 ```
 
-Blur image
+###Blur image
 
 ```js
  
@@ -97,7 +95,7 @@ Blur image
  
 ```
 
-Copy image
+###Copy image
 
 ```js
  
@@ -110,7 +108,7 @@ Copy image
     - autoCopy: set auto copy mode, default: false
 ```
 
-Close image
+###Close image
 
 ```js
  
@@ -128,7 +126,7 @@ Close image
   immediately changes autoClose image property.
 ```
 
-Comment image
+###Comment image
 
 ```js
  
@@ -136,7 +134,7 @@ Comment image
   image.comment([callback(err, image)])
 ```
 
-Peek or plot color pixel
+###Peek or plot color pixel
 
 ```js
  
@@ -156,7 +154,7 @@ Peek or plot color pixel
   colors: an Array of Color objects
 ```
 
-Crop image
+###Crop image
 
 ```js
  
@@ -168,7 +166,7 @@ Crop image
   geometry: geometry string
 ```
 
-End batch
+###End batch
 
 ```js
   
@@ -186,7 +184,7 @@ End batch
   immediately changes batch image property.
 ```
 
-Extent image
+###Extent image
 
 ```js
  
@@ -200,7 +198,7 @@ Extent image
   color: string or Color object
 ```
 
-Filter change for resizing
+###Filter change for resizing
 
 ```js
   
@@ -209,21 +207,21 @@ Filter change for resizing
   filter: filter string, default: "Lanczos"
 ```
 
-Flip image
+###Flip image
 
 ```js
   
   image.flip([callback(err, image)])
 ```
 
-Flop image
+###Flop image
 
 ```js
   
   image.flop([callback(err, image)])
 ```
 
-Format change
+###Format change
 
 ```js
  
@@ -232,21 +230,21 @@ Format change
   magick: format string, e.g. "JPEG"
 ```
 
-Histogram
+###Histogram
 
 ```js
  
   image.histogram([callback(err, histogram)])
 ```
 
-Negate image
+###Negate image
 
 ```js
  
   image.negate([grayscale=false][, callback(err, image)])
 ```
 
-Noise image
+###Noise image
 
 ```js
  
@@ -262,21 +260,21 @@ Noise image
        http://www.imagemagick.org/Magick++/Enumerations.html#ChannelType
 ```
 
-Normalize image
+###Normalize image
 
 ```js
  
   image.normalize([callback(err, image)])
 ```
 
-Oilpaint image
+###Oilpaint image
 
 ```js
  
   image.oil([radius=3][, callback(err, image)])
 ```
 
-Ping image
+###Ping image
 
 ```js
  
@@ -289,7 +287,7 @@ Ping image
   todo: implement async read for file
 ```
 
-Properties set or get
+###Properties set or get
 
 ```js
  
@@ -316,7 +314,7 @@ Properties set or get
     - fuzz:       set color fuzz
 ```
 
-Quality change
+###Quality change
 
 ```js
  
@@ -325,7 +323,7 @@ Quality change
   quality: a number 0 - 100
 ```
 
-Quantize image
+###Quantize image
 
 ```js
  
@@ -339,14 +337,14 @@ Quantize image
     - dither: true or false
 ```
 
-Restore image
+###Restore image
 
 ```js
  
   image.restore([callback(err, image)])
 ```
 
-Rotate image
+###Rotate image
 
 ```js
  
@@ -355,7 +353,7 @@ Rotate image
   degrees: a number 0 - 360
 ```
 
-Sharpen image
+###Sharpen image
 
 ```js
  
@@ -370,7 +368,7 @@ Sharpen image
  
 ```
 
-Size get or set
+###Size get or set
 
 ```js
  
@@ -387,7 +385,7 @@ Size get or set
   size: an Array of [width, height]
 ```
 
-Read image
+###Read image
 
 ```js
  
@@ -399,7 +397,7 @@ Read image
   todo: implement async read for file
 ```
 
-Reset image page
+###Reset image page
 
 ```js
  
@@ -410,7 +408,7 @@ Reset image page
   page: geometry string or page description, e.g. "A4"
 ```
 
-Resize image applying filter
+###Resize image applying filter
 
 ```js
  
@@ -438,14 +436,14 @@ Resize image applying filter
   mode tags can be combined (separated by space, comma or (semi)colon)
 ```
 
-Strip image of profiles and comments
+###Strip image of profiles and comments
 
 ```js
  
   image.strip([callback(err, image)])
 ```
 
-Trim image
+###Trim image
 
 ```js
  
@@ -455,7 +453,7 @@ Trim image
         colors within fuzz distance are considered equal
 ```
 
-Type image
+###Type image
 
 ```js
  
@@ -466,7 +464,7 @@ Type image
   see: http://www.imagemagick.org/Magick++/Enumerations.html#ImageType
 ```
 
-Write image
+###Write image
 
 ```js
  
@@ -480,7 +478,7 @@ Write image
   todo: implement async write to file
 ```
 
-Image properties
+###Image properties
 
 ```js
  
@@ -531,12 +529,12 @@ Image properties
 
   image.fuzz -> image color fuzz number
   image.fuzz = changes fuzz
-
+```
 
 ##magick.Image (stream)
 
 
-Writeable image stream
+###Writeable image stream
 
 ```js
  
@@ -547,7 +545,7 @@ Writeable image stream
   note: can't create many simultaneous writable streams from one image instance
 ```
 
-Convert image stream
+###Convert image stream
 
 ```js
  
@@ -558,7 +556,7 @@ Convert image stream
   note: can't create many simultaneous convert streams from one image instance
 ```
 
-Read stream from image
+###Read stream from image
 
 ```js
  
@@ -570,7 +568,7 @@ Read stream from image
 ##magick.Color
 
 
-Color object factory
+###Color object factory
 
 ```js
  
@@ -583,259 +581,259 @@ Color object factory
   value:        a 32-bit integer color value
 ```
 
-Red color
+###Red color
 
 ```js
  
   color.red([scale=1]) -> number
 ```
 
-Green color
+###Green color
 
 ```js
  
   color.red([scale=1]) -> number
 ```
 
-Blue color
+###Blue color
 
 ```js
  
   color.red([scale=1]) -> number
 ```
 
-Alpha color
+###Alpha color
 
 ```js
  
   color.alpha([scale=1]) -> number
 ```
 
-Y color (from YUV model)
+###Y color (from YUV model)
 
 ```js
  
   color.y([scale=1]) -> number
 ```
 
-U color (from YUV model)
+###U color (from YUV model)
 
 ```js
  
   color.u([scale=1]) -> number
 ```
 
-V color (from YUV model)
+###V color (from YUV model)
 
 ```js
  
   color.v([scale=1]) -> number
 ```
 
-Hue color (from HSB model)
+###Hue color (from HSB model)
 
 ```js
  
   color.hue([scale=1]) -> number
 ```
 
-Lightness color (from HSL model)
+###Lightness color (from HSL model)
 
 ```js
  
   color.lightness([scale=1]) -> number
 ```
 
-Value color (from HSV model)
+###Value color (from HSV model)
 
 ```js
  
   color.value([scale=1]) -> number
 ```
 
-Brightness color (from HSB model)
+###Brightness color (from HSB model)
 
 ```js
  
   color.brightness([scale=1]) -> number
 ```
 
-Intensity color (from HSI model)
+###Intensity color (from HSI model)
 
 ```js
  
   color.intensity([scale=1]) -> number
 ```
 
-RGB scaled color (from RGB model)
+###RGB scaled color (from RGB model)
 
 ```js
  
   color.rgb([scale=1]) -> Array(3)
 ```
 
-RGBA scaled color (from RGB model)
+###RGBA scaled color (from RGB model)
 
 ```js
  
   color.rgba([scale=1]) -> Array(4)
 ```
 
-YUV scaled color (from YUV model)
+###YUV scaled color (from YUV model)
 
 ```js
  
   color.yuv([scale=1]) -> Array(3)
 ```
 
-YUVA scaled color (from YUV model)
+###YUVA scaled color (from YUV model)
 
 ```js
  
   color.yuva([scale=1]) -> Array(4)
 ```
 
-HSL scaled color (from HSL model)
+###HSL scaled color (from HSL model)
 
 ```js
  
   color.hsl([scale=1]) -> Array(3)
 ```
 
-HSLA scaled color (from HSL model)
+###HSLA scaled color (from HSL model)
 
 ```js
  
   color.hsla([scale=1]) -> Array(4)
 ```
 
-HSV scaled color (from HSV model)
+###HSV scaled color (from HSV model)
 
 ```js
  
   color.hsv([scale=1]) -> Array(3)
 ```
 
-HSVA scaled color (from HSV model)
+###HSVA scaled color (from HSV model)
 
 ```js
  
   color.hsva([scale=1]) -> Array(4)
 ```
 
-HSB scaled color (from HSB model)
+###HSB scaled color (from HSB model)
 
 ```js
  
   color.hsb([scale=1]) -> Array(3)
 ```
 
-HSBA scaled color (from HSB model)
+###HSBA scaled color (from HSB model)
 
 ```js
  
   color.hsba([scale=1]) -> Array(4)
 ```
 
-HSI scaled color (from HSI model)
+###HSI scaled color (from HSI model)
 
 ```js
  
   color.hsi([scale=1]) -> Array(3)
 ```
 
-HSIA scaled color (from HSI model)
+###HSIA scaled color (from HSI model)
 
 ```js
  
   color.hsia([scale=1]) -> Array(4)
 ```
 
-HWB scaled color (from HWB model)
+###HWB scaled color (from HWB model)
 
 ```js
  
   color.hwb([scale=1]) -> Array(3)
 ```
 
-HWBA scaled color (from HWB model)
+###HWBA scaled color (from HWB model)
 
 ```js
  
   color.hwba([scale=1]) -> Array(4)
 ```
 
-RGB Color object factory
+###RGB Color object factory
 
 ```js
  
     Color.RGB(red, green, blue[, alpha=opaque]) -> color
 ```
 
-YUV Color object factory
+###YUV Color object factory
 
 ```js
  
     Color.YUV(y, u, v[, alpha=opaque]) -> color
 ```
 
-HSL Color object factory
+###HSL Color object factory
 
 ```js
  
     Color.HSL(hue, saturation, lightness[, alpha=opaque]) -> color
 ```
 
-HSV Color object factory
+###HSV Color object factory
 
 ```js
  
     Color.HSV(hue, saturation, value[, alpha=opaque]) -> color
 ```
 
-HSB Color object factory
+###HSB Color object factory
 
 ```js
  
     Color.HSB(hue, saturation, brightness[, alpha=opaque]) -> color
 ```
 
-HSI Color object factory
+###HSI Color object factory
 
 ```js
  
     Color.HSI(hue, saturation, intensity[, alpha=opaque]) -> color
 ```
 
-HWB Color object factory
+###HWB Color object factory
 
 ```js
  
     Color.HWB(hue, whiteness, blackness[, alpha=opaque]) -> color
 ```
 
-Value of color
+###Value of color
 
 ```js
  
   color.valueOf() -> a 32-bit integer color value
 ```
 
-String name of color
+###String name of color
 
 ```js
  
   color.toString() -> an x11/html color value
 ```
 
-Quantum from normalized value
+###Quantum from normalized value
 
 ```js
  
     Color.toQuantum(value) -> integer
 ```
 
-Normalized value form quantum
+###Normalized value form quantum
 
 ```js
  

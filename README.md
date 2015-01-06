@@ -97,7 +97,7 @@ Images may be copied to perform different transformations without reloading from
     write();
 ```
 
-Asynchronous copy + stream == Asynchronous read once, convert many
+###Streams
 
 
 ```js
@@ -122,8 +122,11 @@ Asynchronous copy + stream == Asynchronous read once, convert many
     // all transformations done and sent down the stream
   });
 
-  /*  2 in 1 convert stream  */
+```
 
+Asynchronous copy + stream == read once, convert many
+
+```js
   var im = new Image({batch: true, autoClose: false}).
     copy(true). // must be here otherwise restore() will restore empty image
     format("JPEG").

@@ -446,8 +446,6 @@ namespace NodeMagick {
    *
    *   - batch: set persistent batch mode, default: false
    *
-   * if callback is provided executes batch otherwise clears batch tail from jobs
-   *
    * if batch or options argument is provided this function
    * immediately changes batch image property.
    **/
@@ -1745,7 +1743,7 @@ namespace NodeMagick {
   /**
    * image.fuzz -> image color fuzz number
    * image.fuzz = changes fuzz
-   */
+   **/
   NAN_GETTER(Image::GetFuzz) {
     NODEMAGICK_SCOPE_IMAGE_UNWRAP();
     lock _milock(&image->imagemutex);
