@@ -196,3 +196,36 @@ test("Properties should be accessible during async process", function (t) {
     t.ok(err == null, "no error")
   })
 });
+
+
+test("image.end callback asynchronous or immediate", function (t) {
+  var im = new Image()
+  var counter = 0
+  t.plan(1 + 3 + 6 + 4 + 1)
+  t.strictEqual(im.isSync, true)
+  im.end(function(err, im2) {
+    t.ok(err == null)
+    t.strictEqual(im2, im)
+    ++counter
+    t.equal(counter, 1)
+  })
+  t.equal(counter, 1)
+  im.begin()
+  im.resize(10, 10)
+  t.equal(im.batchSize, 1)
+  t.strictEqual(im.isSync, false)
+  im.end()
+  t.strictEqual(im.batchSize, null)
+  t.strictEqual(im.isSync, true)
+  im.begin()
+  t.strictEqual(im.isSync, false)
+  im.end(function(err, im2) {
+    t.equal(im.batchSize, 0)
+    t.ok(err == null)
+    t.strictEqual(im2, im)
+    ++counter
+    t.equal(counter, 2)
+  })
+  t.equal(counter, 1)
+})
+

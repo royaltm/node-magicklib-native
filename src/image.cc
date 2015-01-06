@@ -772,8 +772,10 @@ namespace NodeMagick {
     }
 
     if ( callback ) {
-      Local<Value> argv[] = { args.This() };
-      NanMakeCallback( NanGetCurrentContext()->Global(), NODEMAGICK_ASYNC_CALLBACK(), 1, argv );
+
+      Local<Value> argv[] = { NanNull(), args.This() };
+      NanMakeCallback( NanGetCurrentContext()->Global(), NODEMAGICK_ASYNC_CALLBACK(), 2, argv );
+
     } else {
       if ( setpersist )
         image->IsPersistentBatch(batch);
