@@ -11,3 +11,6 @@ sftp-config.json
 /build
 *.o
 *.so
+/out.*
+/*.jpg
+/*.png
