@@ -117,10 +117,52 @@ namespace NodeMagick {
     Image::Init(exports);
     Color::Init(exports);
     NODE_SET_METHOD(exports, "limit", Limit);
+
+    size_t value;
+
+    exports->Set(NanNew<String>("QUANTUM_DEPTH_TEXT"),
+        NanNew<String>(MagickCore::GetMagickQuantumDepth(&value)),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
     exports->Set(NanNew<String>("QUANTUM_DEPTH"),
-        NanNew<Integer>(MAGICKCORE_QUANTUM_DEPTH), ReadOnly);
+        NanNew<Integer>((uint32_t) value),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
+    exports->Set(NanNew<String>("QUANTUM_RANGE_TEXT"),
+        NanNew<String>(MagickCore::GetMagickQuantumRange(&value)),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
     exports->Set(NanNew<String>("QUANTUM_RANGE"),
-        NanNew<Number>((double)((1L << MAGICKCORE_QUANTUM_DEPTH) - 1)), ReadOnly);
+        NanNew<Number>((double) value),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
+    exports->Set(NanNew<String>("MAGICK_VERSION"),
+        NanNew<String>(MagickLibVersionText),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
+    exports->Set(NanNew<String>("MAGICK_INFO"),
+        NanNew<String>(MagickCore::GetMagickVersion(&value)),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
+    exports->Set(NanNew<String>("MAGICK_VERSION_RELEASE"),
+        NanNew<String>(MagickCore::GetMagickReleaseDate()),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
+    exports->Set(NanNew<String>("MAGICK_VERSION_NUMBER"),
+        NanNew<Integer>((uint32_t) value),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
+    exports->Set(NanNew<String>("MAGICK_FEATURES"),
+        NanNew<String>(MagickCore::GetMagickFeatures()),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
+    exports->Set(NanNew<String>("MAGICK_DELEGATES"),
+        NanNew<String>(MagickCore::GetMagickDelegates()),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+
+    exports->Set(NanNew<String>("MAGICK_COPYRIGHT"),
+        NanNew<String>(MagickCore::GetMagickCopyright()),
+                    static_cast<PropertyAttribute>(ReadOnly | DontDelete));
 
     MagickCore::SetMagickResourceLimit(MagickCore::ThreadResource, 1);
   }

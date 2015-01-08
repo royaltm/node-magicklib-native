@@ -3,6 +3,15 @@ var magick = module.exports = require(__dirname + '/build/Release/magicklib.node
   , Color = magick.Color
   , Image = magick.Image;
 
+  Object.defineProperty(magick, 'VERSION', {
+    enumerable: true,
+    configurable: false,
+    writable: false,
+    value: require(__dirname + '/package.json').version
+  });
+
+  (Object.freeze || Object)(magick);
+
   Image.prototype.prop = Image.prototype.properties;
 
 /* Color utils  */
