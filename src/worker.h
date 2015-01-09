@@ -30,7 +30,8 @@ namespace NodeMagick {
     protected:
       Worker(void);
       Local<Value> SyncProcess(T &job, Local<Object> self);
-      void AsyncWork(const Handle<Object>&self, const Handle<Function>&fn);
+      void AsyncWork(const Handle<Object>&self, T *job, bool hasCallback = false);
+      void AsyncWork(const Handle<Object>&self, const Handle<Function>&fn, T *job = NULL);
       bool Hold(void);
       void Release(const Handle<Object> &self, T *job);
       virtual void ProcessJob(T &job);
@@ -56,12 +57,13 @@ namespace NodeMagick {
       NAN_INLINE void RunAsync(void);
       NAN_INLINE void Lock(void);
       NAN_INLINE void Unlock(void);
+      NAN_INLINE void BatchUnshift(T *job);
       NAN_INLINE T *BatchNext(void);
       NAN_INLINE void BatchReset(void);
       NAN_INLINE void BatchClearBeforeCursor(void);
       void SetErrorMessage(const char *msg);
       NAN_INLINE const char* ErrorMessage() const;
-      NAN_INLINE void DisposeObjects(uint32_t minIndex);
+      NAN_INLINE void DisposeStorageItems(uint32_t minIndex);
 
       static void AsyncExecute (uv_work_t*);
       static void AsyncExecuteComplete (uv_work_t*);
@@ -73,9 +75,6 @@ namespace NodeMagick {
       /* the async operation is running on thread queue */
       bool isBusy;
 
-      /* at least one callback has been set */
-      bool isCallbackSet;
-
       /* the async operation is on hold */
       bool isOnHold;
 
@@ -84,19 +83,24 @@ namespace NodeMagick {
 
       /* do not get back to sync mode after batch completes */
       bool isPersistentBatch;
+
+      /* here be jobs */
       vector<T*> batch;
       size_t cursor;
+      size_t cursorStop;
+      /* storage for callbacks and persistent data (mainly blobs) */
       Persistent<Object> storage;
       /*
         [ kSelfKey: self,
           kCallbackKey: callback, ...,
           storageIndex: lastItem]
       */
+      /* storage cursor */
       uint32_t currentIndex;
+      /* storage top */
       uint32_t storageIndex;
       char *errmsg;
-      static const uint32_t kSelfKey = 0, kCallbackKey = 1;
-      static const uint32_t kStorageMinKey = kCallbackKey;
+      static const uint32_t kSelfKey = 0, kStorageMinKey = 1;
   };
 
 }

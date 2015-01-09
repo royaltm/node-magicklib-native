@@ -16,7 +16,13 @@ namespace NodeMagick {
       virtual ~Job(void);
       virtual bool HasReturnValue(void);
       virtual Local<Value> ReturnedValue(void);
-      int callbackCount;
+      bool IsCallbackSet();
+      uint32_t GetStorageIndex();
+      void SetStorageIndex(uint32_t index);
+      void SetStorageIndex(uint32_t index, bool isCallback);
+    private:
+      uint32_t storageIndex;
+      bool isCallbackSet;
   };
 }
 #endif

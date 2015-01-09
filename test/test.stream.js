@@ -96,7 +96,7 @@ test("should error writing to stream", function(t) {
 
   t.plan(2 + 3 + 5)
   var reader = im.createReadStream().on('error', function(err) {
-    t.equal(im.batchSize, 0)
+    t.equal(im.batchSize, 1)
     t.type(err, Error, "should be error")
   });
   t.type(reader, stream.Readable)

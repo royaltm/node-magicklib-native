@@ -7,12 +7,32 @@ namespace NodeMagick {
 
   using namespace std;
 
-  Job::Job() : callbackCount(0) {}
+  Job::Job() : storageIndex(0), isCallbackSet(false) {}
+
   Job::~Job() {
     //printf("freed job!\n");
   }
+
   bool Job::HasReturnValue() { return false; }
+
   Local<Value> Job::ReturnedValue() {
     return NanNew<Object>();
+  }
+
+  bool Job::IsCallbackSet() {
+    return isCallbackSet;
+  }
+
+  uint32_t Job::GetStorageIndex() {
+    return storageIndex;
+  }
+
+  void Job::SetStorageIndex(uint32_t index) {
+    storageIndex = index;
+  }
+
+  void Job::SetStorageIndex(uint32_t index, bool isCallback) {
+    storageIndex = index;
+    isCallbackSet = isCallback;
   }
 }

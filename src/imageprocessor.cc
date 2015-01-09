@@ -804,7 +804,7 @@ namespace NodeMagick {
   /* Buffer free memory callback */
   NAN_INLINE void ImageWriteJob::FreeBlob(char *, void *blob) {
     delete (Magick::Blob *)blob;
-    //printf("freed buffer: %p\n", blob);
+    // printf("freed buffer: %p\n", blob);
   }
 
   Local<Value> ImageWriteJob::ReturnedValue() {

@@ -14,10 +14,10 @@ namespace NodeMagick {
   template <class T>
   Worker<T>::Worker()
       : mutex( uv_mutex_t() ), request( uv_work_t() )
-      , isBusy(false), isCallbackSet(false), isOnHold(false)
+      , isBusy(false), isOnHold(false)
       , isBatch(false), isPersistentBatch(false)
-      , batch( vector<T*>() ), cursor( 0 )
-      , currentIndex( kStorageMinKey ), storageIndex( kStorageMinKey )
+      , batch( vector<T*>() ), cursor( 0 ), cursorStop( 0 )
+      , currentIndex( kStorageMinKey ), storageIndex( kStorageMinKey - 1 )
       , errmsg( NULL ) {
     NanScope();
     uv_mutex_init(&mutex);
@@ -42,15 +42,17 @@ namespace NodeMagick {
   }
 
   template <class T>
-  NAN_INLINE void Worker<T>::DisposeObjects(uint32_t minIndex) {
+  NAN_INLINE void Worker<T>::DisposeStorageItems(uint32_t minIndex) {
     NanScope();
     Local<Object> handle = NanNew(storage);
-    if ( minIndex == kSelfKey )
-      handle->Delete(kSelfKey);
-    if ( minIndex > currentIndex ) currentIndex = minIndex;
-    for(uint32_t i = currentIndex; i <= storageIndex; ++i)
+    if ( minIndex < kStorageMinKey ) {
+      minIndex = kStorageMinKey;
+    }
+    for( uint32_t i = max(minIndex, currentIndex); i <= storageIndex; ++i )
       handle->Delete(i);
-    currentIndex = storageIndex = kStorageMinKey;
+    storageIndex = minIndex - 1;
+    if ( currentIndex > minIndex )
+      currentIndex = minIndex;
   }
 
   template <class T>
@@ -64,7 +66,7 @@ namespace NodeMagick {
   template <class T>
   NAN_INLINE bool Worker<T>::IsBatch() const       { return isBatch;  }
   template <class T>
-  NAN_INLINE size_t Worker<T>::BatchSize() const { return batch.size(); }
+  NAN_INLINE size_t Worker<T>::BatchSize() const   { return batch.size(); }
   template <class T>
   NAN_INLINE size_t Worker<T>::BatchPendingSize() {
     NODEMAGICK_WORKER_BATCH_LOCK(_block);
@@ -88,12 +90,21 @@ namespace NodeMagick {
   template <class T>
   NAN_INLINE void Worker<T>::BatchPush(T *job) {
     NODEMAGICK_WORKER_BATCH_LOCK(_block);
+    job->SetStorageIndex(storageIndex);
     batch.push_back(job);
+  }
+  template <class T>
+  NAN_INLINE void Worker<T>::BatchUnshift(T *job) {
+    NODEMAGICK_WORKER_BATCH_LOCK(_block);
+    batch.insert(batch.begin(), job);
+    if ( cursorStop > 0 )
+      ++cursorStop;
+    batch.back()->SetStorageIndex(storageIndex);
   }
   template <class T>
   NAN_INLINE T *Worker<T>::BatchNext() {
     NODEMAGICK_WORKER_BATCH_LOCK(_block);
-    return ( cursor < batch.size() ) ? batch.at(cursor++) : NULL;
+    return ( cursor < cursorStop ) ? batch.at(cursor++) : NULL;
   }
   template <class T>
   NAN_INLINE void Worker<T>::BatchClearBeforeCursor() {
@@ -110,7 +121,7 @@ namespace NodeMagick {
     for(typename vector<T*>::iterator it = batch.begin();
                                       it != batch.end(); ++it)
       delete *it;
-    cursor = 0;
+    cursor = cursorStop = 0;
     batch.clear();
     if ( ! IsPersistentBatch() ) {
       isBatch = false;
@@ -118,24 +129,26 @@ namespace NodeMagick {
   }
   template <class T>
   NAN_INLINE void Worker<T>::CancelTailJobs() {
+    uint32_t disposeIndex;
     {
       NODEMAGICK_WORKER_BATCH_LOCK(_block);
-      typename vector<T*>::iterator it = batch.end();
-      while( it != batch.begin() ) {
-        --it;
-        if ( *it == NULL || (*it)->callbackCount != 0 ) {
-          ++it;
-          break;
-        }
+      typename vector<T*>::iterator it = batch.begin() + cursorStop;
+      for(; it != batch.end(); ++it )
         delete *it;
+
+      T *job = cursorStop > 0 ? batch.at(cursorStop - 1) : NULL;
+      if ( job == NULL ) {
+        cursor = cursorStop = 0;
+        batch.clear();
+        if ( ! IsBusy() && ! IsPersistentBatch() )
+          isBatch = false;
+        disposeIndex = kStorageMinKey;
+      } else {
+        batch.erase( batch.begin() + cursorStop, batch.end() );
+        disposeIndex = job->GetStorageIndex() + 1;
       }
-      batch.erase( it, batch.end() );
     }
-    if ( ! IsBusy() ) {
-      DisposeObjects(kStorageMinKey + 1);
-      if ( ! IsPersistentBatch() )
-        isBatch = false;
-    }
+    DisposeStorageItems(disposeIndex);
   }
 
   /* this is run on main and there are no async threads */
@@ -170,26 +183,44 @@ namespace NodeMagick {
 
   /* this is run on main but there may be async thread running */
   template <class T>
-  void Worker<T>::AsyncWork(const Handle<Object> &self, const Handle<Function> &fn) {
+  void Worker<T>::AsyncWork(const Handle<Object> &self, T *job, bool hasCallback) {
     NanScope();
 
-    if ( cursor != batch.size() )
-      ++(batch.back()->callbackCount);
+    {
+      NODEMAGICK_WORKER_BATCH_LOCK(_block);
+      if ( job == NULL ) {
+        if ( batch.size() - cursor == 0 ) {
+          job = new T();
+          job->Setup();
+          batch.push_back(job);
+        } else {
+          job = batch.back();
+        }
+      } else {
+        batch.push_back(job);
+      }
 
-    Local<Object> handle( NanNew(storage) );
+      job->SetStorageIndex(storageIndex, hasCallback);
 
-    if ( ! isCallbackSet ) {
-      handle->Set(kCallbackKey, fn);
-      isCallbackSet = true;
-    } else {
-      handle->Set(++storageIndex, fn);
+      cursorStop = batch.size();
     }
 
     if ( ! IsBusy() ) {
       SetupBatch();
-      handle->Set(kSelfKey,   self);
+      NanNew(storage)->Set(kSelfKey, self);
       RunAsync();
     }
+  }
+
+  /* this is run on main but there may be async thread running */
+  template <class T>
+  void Worker<T>::AsyncWork(const Handle<Object> &self, const Handle<Function> &fn, T *job) {
+    NanScope();
+
+    NanNew(storage)->Set(++storageIndex, fn);
+
+    AsyncWork(self, job, true);
+
   }
 
   /* this is run on main but there may be async thread running */
@@ -215,9 +246,10 @@ namespace NodeMagick {
   template <class T>
   void Worker<T>::Release(const Handle<Object> &self, T *job) {
     if ( job != NULL )
-      batch.insert(batch.begin(), job);
+      BatchUnshift(job);
+
     isOnHold = false;
-    if ( isCallbackSet ) {
+    if ( cursor < cursorStop ) {
       NanScope();
       Local<Object> handle( NanNew(storage) );
       handle->Set(kSelfKey, self);
@@ -266,18 +298,16 @@ namespace NodeMagick {
     delete errmsg;
     errmsg = NULL;
     try {
-
       for (; job != NULL; job = BatchNext() ) {
         ProcessJob( *job );
-        if ( job->callbackCount != 0 ) break;
+        if ( job->IsCallbackSet() ) break;
       }
-
     } catch (exception& err) {
       SetErrorMessage(err.what());
     } catch (...) {
       SetErrorMessage("unhandled error");
     }
-    while ( job != NULL && job->callbackCount == 0 ) job = BatchNext();
+    while ( job != NULL && ! job->IsCallbackSet() ) job = BatchNext();
   }
 
   /* this is run on main and there are no async threads */
@@ -285,76 +315,68 @@ namespace NodeMagick {
   void Worker<T>::JobComplete(bool isAsync) {
     NanScope();
 
-    if ( isAsync ) {
+    if (isAsync) {
 
       request.~uv_work_t();
 
       Local<Object> handle ( NanNew(storage) );
       Handle<Object> global = NanGetCurrentContext()->Global();
 
-      int callbacksToRun;
-      T *job;
-
-      if ( cursor != 0 ) {
-        job = batch.at(cursor - 1);
-        callbacksToRun = job->callbackCount;
-      } else {
-        job = NULL;
-        callbacksToRun = -1;
-      }
+      T *job = batch.at(cursor - 1);
+      uint32_t topIndex = job->GetStorageIndex();
 
       /* handle original callback */
-      Local<Function> callback = handle->Get(kCallbackKey).template As<Function>();
-      if ( ErrorMessage() == NULL ) {
-        Local<Value> result;
-        if ( job != NULL && job->HasReturnValue() ) {
-          result = job->ReturnedValue();
-        } else
-          result = ReturnedValue();
-        Local<Value> argv[] = { NanNull(), result };
-        NanMakeCallback(global, callback, 2, argv);
-      } else {
-        Local<Value> argv[] = {
-          Exception::Error( NanNew<String>( ErrorMessage() ) )
-        };
-        NanMakeCallback(global, callback, 1, argv);
+      while ( currentIndex <= topIndex ) {
+        Local<Value> value = handle->Get(currentIndex);
+        handle->Delete(currentIndex++);
+        if ( value->IsFunction() ) {
+          if ( ErrorMessage() == NULL ) {
+            Local<Value> result;
+            if ( job->HasReturnValue() ) {
+              result = job->ReturnedValue();
+            } else
+              result = ReturnedValue();
+            Local<Value> argv[] = { NanNull(), result };
+            NanMakeCallback(global, value.template As<Function>(), 2, argv);
+          } else {
+            Local<Value> argv[] = {
+              Exception::Error( NanNew<String>( ErrorMessage() ) )
+            };
+            NanMakeCallback(global, value.template As<Function>(), 1, argv);
+          }
+
+          break;
+        }
+      }
+
+      /* scan through storage for additional callbacks */
+      while ( currentIndex <= topIndex ) {
+        Local<Value> value = handle->Get(currentIndex);
+        handle->Delete(currentIndex++);
+        if ( value->IsFunction() ) {
+          Local<Value> argv[] = { NanNull(), ReturnedValue() };
+          NanMakeCallback(global, value.template As<Function>(), 2, argv);
+        }
       }
 
       if ( cursor == batch.size() ) {
         BatchReset();
+        DisposeStorageItems(kStorageMinKey);
       } else {
         BatchClearBeforeCursor();
       }
 
-      /* scan through storage for callbacks */
-      while (++currentIndex <= storageIndex) {
-        Local<Value> value = handle->Get(currentIndex);
-        handle->Delete(currentIndex);
-        if ( value->IsFunction() ) {
-          /* check if callback can be applied immediately */
-          if ( batch.empty() || callbacksToRun-- > 1 ) {
-            Local<Value> argv[] = { NanNull(), ReturnedValue() };
-            NanMakeCallback(global, value.template As<Function>(), 2, argv);
-          } else {
-            /* set for next round */
-            handle->Set( kCallbackKey, value.template As<Function>() );
-            break;
-          }
-        }
-      }
-
-      if ( currentIndex > storageIndex ) {
-        Unlock();
-        isCallbackSet = false;
-        DisposeObjects(kSelfKey);
-        JobAfterComplete(isAsync);
-      } else {
+      if ( cursor < cursorStop ) {
         RunAsync();
+      } else {
+        Unlock();
+        handle->Delete(kSelfKey);
+        JobAfterComplete(isAsync);
       }
 
-    } else {
+    } else { /* is Sync */
 
-      DisposeObjects(kStorageMinKey + 1);
+      DisposeStorageItems(kStorageMinKey);
       JobAfterComplete(isAsync);
 
     }

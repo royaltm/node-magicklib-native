@@ -33,17 +33,19 @@
   JobKlass job;                                      \
   NODEMAGICK_CHECK_ASYNC_ARGS
 
-#define NODEMAGICK_FINISH_IMAGE_WORKER_NO_ARGS(JobKlass, job)         \
-  do {                                                                \
-    if ( callback || image->IsBatch() ) {                             \
-      image->BatchPush( new JobKlass(job) );                          \
-      if ( callback ) {                                               \
-        image->AsyncWork( args.This(), NODEMAGICK_ASYNC_CALLBACK() ); \
-      }                                                               \
-    } else {                                                          \
-      NanReturnValue( image->SyncProcess( job, args.This() ) );       \
-    }                                                                 \
-    NanReturnValue(args.This());                                      \
+#define NODEMAGICK_FINISH_IMAGE_WORKER_NO_ARGS(JobKlass, job)       \
+  do {                                                              \
+    if ( callback || image->IsBatch() ) {                           \
+      if ( callback ) {                                             \
+        image->AsyncWork( args.This(), NODEMAGICK_ASYNC_CALLBACK(), \
+                          new JobKlass(job) );                      \
+      } else {                                                      \
+        image->BatchPush( new JobKlass(job) );                      \
+      }                                                             \
+    } else {                                                        \
+      NanReturnValue( image->SyncProcess( job, args.This() ) );     \
+    }                                                               \
+    NanReturnValue(args.This());                                    \
   } while(0)
 
 #define NODEMAGICK_FINISH_IMAGE_WORKER(JobKlass, job, errorstring) \
