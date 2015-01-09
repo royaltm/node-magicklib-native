@@ -226,3 +226,25 @@ test("Ping image", function(t) {
     t.end()
   }), im)
 })
+
+test("Read zero-length blob", function(t) {
+  var im = new Image()
+  t.plan(5 + 4 + 4)
+  t.ok(im.empty, "is empty")
+  t.throws(function() { im.read(new Buffer(0)) }, "zero-length blob not permitted")
+  t.ok(!im.empty, "is not empty")
+  t.throws(function() { im.ping(new Buffer(0)) }, "unrecognized image format")
+  t.ok(!im.empty, "is not empty")
+  im.read(new Buffer(0), function(err, im2) {
+    t.strictEqual(im2, void(0))
+    t.type(err, Error)
+    t.like(err, (/zero-length blob not permitted/))
+    t.ok(!im.empty, "is not empty")
+  })
+  im.ping(new Buffer(0), function(err, im2) {
+    t.strictEqual(im2, void(0))
+    t.type(err, Error)
+    t.like(err, (/unrecognized image format/))
+    t.ok(!im.empty, "is not empty")
+  })
+})

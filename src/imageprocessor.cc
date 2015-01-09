@@ -422,11 +422,12 @@ namespace NodeMagick {
 
   void ImagePingJob::ProcessImage(Image *image) {
     Magick::Image mi;
-    if (data != NULL) {
+    NanUtf8String *file_ = file.get();
+    if (file_ == NULL) {
       Magick::Blob blob(data, length);
       mi.ping(blob);
     } else {
-      mi.ping(**file);
+      mi.ping(**file_);
     }
     columns = mi.columns();
     rows = mi.rows();
@@ -575,11 +576,12 @@ namespace NodeMagick {
   }
 
   void ImageReadJob::ProcessImage(Image *image) {
-    if (data != NULL) {
+    NanUtf8String *file_ = file.get();
+    if (file_ == NULL) {
       Magick::Blob blob(data, length);
       image->GetMagickImage()->read(blob);
     } else {
-      image->GetMagickImage()->read(**file);
+      image->GetMagickImage()->read(**file_);
     }
   }
 
