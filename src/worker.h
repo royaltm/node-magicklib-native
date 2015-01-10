@@ -10,19 +10,6 @@ namespace NodeMagick {
 
   using namespace std;
 
-  class lock {
-  private:
-    uv_mutex_t *m_;
-
-  public:
-    lock(uv_mutex_t *m) : m_(m) {
-      uv_mutex_lock(m);
-    }
-    ~lock() {
-      uv_mutex_unlock(m_);
-    }
-  };
-
   template <class T>
   class Worker {
     public:

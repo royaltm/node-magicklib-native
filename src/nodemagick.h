@@ -55,6 +55,50 @@ namespace NodeMagick {
 
   //extern Persistent<Function> bufferFunction;
 
+  /* this class is used to scope lock mutex (RAII) */
+
+  class lock {
+  private:
+    uv_mutex_t *m_;
+
+  public:
+    lock(uv_mutex_t *m) : m_(m) {
+      uv_mutex_lock(m);
+    }
+    ~lock() {
+      uv_mutex_unlock(m_);
+    }
+  };
+
+  /* this class is used to scope unlock previously locked mutex (RAII) */
+
+  class unlock {
+  private:
+    uv_mutex_t *m_;
+
+  public:
+    unlock(uv_mutex_t *m) : m_(m) {
+      uv_mutex_unlock(m);
+    }
+    ~unlock() {
+      uv_mutex_lock(m_);
+    }
+  };
+
+  /* this class is used to wait at the barrier after scope (RAII) */
+
+  class wall {
+  private:
+    uv_barrier_t *b_;
+
+  public:
+    wall(uv_barrier_t *b) : b_(b) {}
+    ~wall() {
+      uv_barrier_wait(b_);
+    }
+  };
+
+
 }
 
 #define NODEMAGICK_TRY_IGNORE_WARNING(expression) \
