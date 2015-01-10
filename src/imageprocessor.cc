@@ -38,6 +38,144 @@ namespace NodeMagick {
   bool ImageProcessJob::IsValid()        { return valid; }
   bool ImageProcessJob::DontCopy()       { return dontCopy; }
 
+  /* ImageMutualProcessJob */
+
+  ImageMutualProcessJob::ImageMutualProcessJob(ImageMutualKit &kit)
+    : ImageProcessJob(), job(NULL), source(NULL), guard(NULL), barrier(NULL), haveWait(false) {
+    guard = kit.GuardMutex();
+    barrier = kit.Barrier();
+  }
+
+  void ImageMutualProcessJob::SetSynchronizeJob(ImageSynchronizeJob &job_) {
+    job = &job_;
+  }
+
+  void ImageMutualProcessJob::Setup(Image *source_) {
+    source = source_;
+    ImageProcessJob::Setup();
+  }
+
+  /* the destruction won't happen during own ProcessImage */
+  ImageMutualProcessJob::~ImageMutualProcessJob() {
+    if ( ! haveWait ) { /* if we have waited, then skip */
+      { /* try to cancel synchronize job */
+        lock guardscope(guard);
+        if ( job != NULL ) { /* the synchronize job have not cancelled us out already */
+          {
+            lock synchroscope(job->guard);
+            job->job = NULL; /* cancel synchronize job */
+            haveWait = job->haveWait; /* wait if synchronize job is waiting */
+          }
+        }
+      }
+
+      if (haveWait)
+        uv_barrier_wait(barrier);
+    }
+  }
+
+  void ImageMutualProcessJob::ProcessImagesSynchronized(Image *image, Image *source) {}
+
+  void ImageMutualProcessJob::ProcessImage(Image *image) {
+    if ( ! image->IsBatch() ) { /* processing synchronously */
+      if ( source->IsBatch() ) {
+        throw ImageSynchronizeException();
+      } else {
+        lock sourcelock(&source->imagemutex);
+        ProcessImagesSynchronized(image, source);
+        return;
+      }
+    }
+
+    {
+      lock guardscope(guard);
+
+      if ( job == NULL )
+        throw ImageSynchronizeException();
+      haveWait = true;
+    }
+
+    {
+      unlock imagescope(&image->imagemutex);
+      uv_barrier_wait(barrier);
+    }
+
+    if ( job == NULL )
+      throw ImageSynchronizeException();
+
+    {
+      wall scopewait(barrier); /* release synchronize job after scope */
+      lock sourcelock(&source->imagemutex);
+      ProcessImagesSynchronized(image, source);
+    }
+  }
+
+  /* ImageSynchronizeJob */
+
+  ImageSynchronizeJob::ImageSynchronizeJob(ImageMutualKit &kit)
+    : ImageProcessJob(true), job(NULL), guard(NULL), haveWait(false) {
+    guard = kit.GuardMutex();
+  }
+
+  void ImageSynchronizeJob::Setup(ImageMutualProcessJob &job_) {
+    job = &job_;
+    ImageProcessJob::Setup();
+  }
+
+  /* the destruction won't happen during own ProcessImage */
+  ImageSynchronizeJob::~ImageSynchronizeJob() {
+    if ( ! haveWait ) { /* if we have waited, then skip */
+      /* try to cancel mutual job */
+      ImageMutualProcessJob *job_;
+      { /* avoid mutual deadlock */
+        lock guardscope(guard);
+        job_ = job;
+        haveWait = true; /* tell mutual job we will wait eventually */
+      }
+      if ( job_ != NULL ) { /* the mutual job have not cancelled us out already */
+        bool wait;
+        {
+          lock mutualscope(job->guard);
+          job_->job = NULL; /* cancel mutual job */
+          wait = job_->haveWait; /* wait if mutual job is waiting */
+        }
+
+        if (wait)
+          uv_barrier_wait(job_->barrier);
+      }
+    }
+  }
+
+  void ImageSynchronizeJob::ProcessImage(Image *image) {
+    uv_barrier_t *barrier_;
+    {
+      lock guardscope(guard);
+
+      if ( job == NULL )
+        return;
+
+      barrier_ = job->barrier;
+      haveWait = true;
+    }
+
+    {
+      unlock imagescope(&image->imagemutex);
+      uv_barrier_wait(barrier_);
+
+      {
+        lock guardscope(guard);
+
+        if ( job != NULL ) {
+          /* wait for mutual job to complete */
+          uv_barrier_wait(barrier_);
+        }
+      }
+    }
+  }
+
+  bool ImageSynchronizeJob::HasReturnValue() {
+    return false;
+  }
 
   /* ImageBlurJob */
 

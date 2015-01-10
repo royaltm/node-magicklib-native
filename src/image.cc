@@ -170,8 +170,8 @@ namespace NodeMagick {
     , isCloned(false), autoCopy(false), autoClose(true) { uv_mutex_init(&imagemutex); }
 
   Image::~Image(void) {
+    // printf("image dtor\n");
     uv_mutex_destroy(&imagemutex);
-    // printf("Image freed\n");
   }
 
 

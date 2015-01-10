@@ -14,9 +14,15 @@ namespace NodeMagick {
 
   using namespace std;
 
-  class Image : public ObjectWrap, public Worker<ImageProcessJob> {
+  class Image
+    : public ObjectWrap, public ImageMutualKit, public Worker<ImageProcessJob> {
+  /* the order of super classes is important:
+     ObjectWrap should be 1st for native wraping to work
+     and ImageMutualKit before Worker to be destroyed after Worker clears jobs */
     friend class ImagePropertiesJob;
     friend class ImageCopyJob;
+    friend class ImageSynchronizeJob;
+    friend class ImageMutualProcessJob;
     public:
       Image(void);
       Image(const Image& image_);
