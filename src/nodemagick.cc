@@ -35,6 +35,9 @@ namespace NodeMagick {
   Persistent<String> sizeSym;
   Persistent<String> modeSym;
   Persistent<String> gravitySym;
+  Persistent<String> imageSym;
+  Persistent<String> composeSym;
+  Persistent<String> geometrySym;
 
   //Persistent<Function> bufferFunction;
 
@@ -111,6 +114,9 @@ namespace NodeMagick {
     NanAssignPersistent(sizeSym       , NanNew<String>("size"));
     NanAssignPersistent(modeSym       , NanNew<String>("mode"));
     NanAssignPersistent(gravitySym    , NanNew<String>("gravity"));
+    NanAssignPersistent(imageSym      , NanNew<String>("image"));
+    NanAssignPersistent(composeSym    , NanNew<String>("compose"));
+    NanAssignPersistent(geometrySym   , NanNew<String>("geometry"));
 
     // NanAssignPersistent(bufferFunction, Local<Function>::Cast(NanGetCurrentContext()->Global()->Get(NanNew<String>("Buffer"))));
 

@@ -66,6 +66,7 @@ namespace NodeMagick {
       static NAN_METHOD(Close);
       static NAN_METHOD(Color);
       static NAN_METHOD(Comment);
+      static NAN_METHOD(Composite);
       static NAN_METHOD(Copy);
       static NAN_METHOD(Crop);
       static NAN_METHOD(End);

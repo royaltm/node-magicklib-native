@@ -33,28 +33,69 @@
   JobKlass job;                                      \
   NODEMAGICK_CHECK_ASYNC_ARGS
 
-#define NODEMAGICK_FINISH_IMAGE_WORKER_NO_ARGS(JobKlass, job)       \
-  do {                                                              \
-    if ( callback || image->IsBatch() ) {                           \
-      if ( callback ) {                                             \
-        image->AsyncWork( args.This(), NODEMAGICK_ASYNC_CALLBACK(), \
-                          new JobKlass(job) );                      \
-      } else {                                                      \
-        image->BatchPush( new JobKlass(job) );                      \
-      }                                                             \
-    } else {                                                        \
-      NanReturnValue( image->SyncProcess( job, args.This() ) );     \
-    }                                                               \
-    NanReturnValue(args.This());                                    \
+#define NODEMAGICK_FINISH_IMAGE_WORKER(JobKlass, job, errorstring)   \
+  do {                                                               \
+    if ( ! job.IsValid() ) {                                         \
+      return NanThrowTypeError(errorstring);                         \
+    } else {                                                         \
+      if ( callback || image->IsBatch() ) {                          \
+        if ( callback ) {                                            \
+          image->AsyncWork( args.This(),NODEMAGICK_ASYNC_CALLBACK(), \
+                            new JobKlass(job) );                     \
+        } else {                                                     \
+          image->BatchPush( new JobKlass(job) );                     \
+        }                                                            \
+      } else {                                                       \
+        NanReturnValue( image->SyncProcess( job, args.This() ) );    \
+      }                                                              \
+      NanReturnValue(args.This());                                   \
+    }                                                                \
   } while(0)
 
-#define NODEMAGICK_FINISH_IMAGE_WORKER(JobKlass, job, errorstring) \
-  do {                                                             \
-    if ( ! job.IsValid() ) {                                       \
-      return NanThrowTypeError(errorstring);                       \
-    } else {                                                       \
-      NODEMAGICK_FINISH_IMAGE_WORKER_NO_ARGS(JobKlass, job);       \
-    }                                                              \
+#define NODEMAGICK_BEGIN_MUTUAL_WORKER(JobKlass, job) \
+  NODEMAGICK_SCOPE_IMAGE_UNWRAP_ARGC                  \
+  JobKlass job(*image);                               \
+  Local<Object> sourceObject;                         \
+  Image *source(NULL);                                \
+  NODEMAGICK_CHECK_ASYNC_ARGS
+
+#define NODEMAGICK_UNWRAP_IMAGE_SOURCE(value)           \
+  do {                                                  \
+    Local<Value> _value(value);                         \
+    if ( NanHasInstance(Image::constructor, _value) ) { \
+      sourceObject = _value.As<Object>();               \
+      source = ObjectWrap::Unwrap<Image>(sourceObject); \
+    }                                                   \
+  } while(0)
+
+#define NODEMAGICK_IMAGE_SOURCE_UNWRAPPED() \
+  ( ! sourceObject.IsEmpty() )
+
+#define NODEMAGICK_FINISH_MUTUAL_WORKER(JobKlass, job, errorstring)  \
+  do {                                                               \
+    if ( ! job.IsValid() ) {                                         \
+      return NanThrowTypeError(errorstring);                         \
+    } else if ( sourceObject.IsEmpty() ) {                           \
+      return NanThrowTypeError("missing Image");                     \
+    } else {                                                         \
+      if ( callback || image->IsBatch() ) {                          \
+        JobKlass *_job = new JobKlass(job);                          \
+        ImageSynchronizeJob *_syncjob =                              \
+                                   new ImageSynchronizeJob(*source); \
+        _syncjob->Setup(*_job);                                      \
+        _job->SetSynchronizeJob(*_syncjob);                          \
+        if ( callback ) {                                            \
+          image->AsyncWork( args.This(),NODEMAGICK_ASYNC_CALLBACK(), \
+                            _job );                                  \
+        } else {                                                     \
+          image->BatchPush( _job );                                  \
+        }                                                            \
+        source->AsyncWork( sourceObject, _syncjob );                 \
+      } else {                                                       \
+        NanReturnValue( image->SyncProcess( job, args.This() ) );    \
+      }                                                              \
+      NanReturnValue(args.This());                                   \
+    }                                                                \
   } while(0)
 
 #define NODEMAGICK_COLOR_FROM_VALUE(color, value)         \
@@ -83,6 +124,7 @@ namespace NodeMagick {
     NODE_SET_PROTOTYPE_METHOD(tpl, "close"      , Close);
     NODE_SET_PROTOTYPE_METHOD(tpl, "color"      , Color);
     NODE_SET_PROTOTYPE_METHOD(tpl, "comment"    , Comment);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "composite"  , Composite);
     NODE_SET_PROTOTYPE_METHOD(tpl, "copy"       , Copy);
     NODE_SET_PROTOTYPE_METHOD(tpl, "crop"       , Crop);
     NODE_SET_PROTOTYPE_METHOD(tpl, "end"        , End);
@@ -514,7 +556,117 @@ namespace NodeMagick {
       blur.Setup(sigma, radius, channel, gaussian);
     }
 
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageBlurJob, blur, "blur()'s arguments should number(s)[, string][, boolean]");
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageBlurJob, blur, "blur()'s arguments should be number(s)[, string][, boolean]");
+  }
+
+  /**
+   * Composite images
+   *
+   * image.composite(composeImage[, gravity="center"][, compose="over"][callback(err, image)])
+   * image.composite(composeImage[, geometry][, compose="over"][callback(err, image)])
+   * image.composite(composeImage[, x, y][, compose="over"][callback(err, image)])
+   * image.composite(options[, callback(err, image)])
+   *
+   * options:
+   *
+   *   - image: a compose image to compose onto image
+   *   - gravity: gravity string, e.g: "southwest"
+   *   - geometry: geometry [_, _, x, y] or string, e.g: "+100-50"
+   *   - x: x offset
+   *   - y: y offset
+   *   - compose: compose string, "multiply"
+   **/
+  NAN_METHOD(Image::Composite) {
+    NODEMAGICK_BEGIN_MUTUAL_WORKER(ImageCompositeJob, compositejob)
+
+    if ( argc >= 1 && args[0]->IsObject() ) {
+      Magick::Geometry geometry;
+      Magick::GravityType gravity = Magick::CenterGravity;
+      NODEMAGICK_UNWRAP_IMAGE_SOURCE(args[0]);
+      if ( NODEMAGICK_IMAGE_SOURCE_UNWRAPPED() ) {
+        if ( argc == 1) {
+          compositejob.Setup(source, NULL, gravity);
+        } if ( argc >= 2 && args[1]->IsArray() ) {
+          SetGeometryFromV8Array( geometry, args[1].As<Array>() );
+          if ( argc == 3 && args[2]->IsString() ) {
+            compositejob.Setup(source, new NanUtf8String( args[2] ), geometry);
+          } else if ( argc == 2 ) {
+            compositejob.Setup(source, NULL, geometry);
+          }
+        } else if ( argc == 2 && args[1]->IsString() ) {
+          auto_ptr<NanUtf8String> compose( new NanUtf8String( args[1] ) );
+          gravity = GetGravityFromString(**compose);
+          if ( gravity != Magick::ForgetGravity ) {
+            compositejob.Setup(source, NULL, gravity);
+          } else {
+            geometry = **compose;
+            if ( geometry.isValid() ) {
+              geometry.xNegative(false);
+              geometry.yNegative(false);
+              compositejob.Setup(source, NULL, geometry);
+            } else {
+              compositejob.Setup(source, compose.release(), Magick::CenterGravity);
+            }
+          }
+        } else if ( argc >= 3 ) {
+          if ( args[1]->IsNumber() && args[2]->IsNumber() ) {
+            ssize_t x = args[1]->Int32Value(),
+                    y = args[2]->Int32Value();
+            if ( argc == 4 && args[3]->IsString() ) {
+              compositejob.Setup(source, new NanUtf8String( args[3] ), x, y);
+            } else if ( argc == 3 ) {
+              compositejob.Setup(source, NULL, x, y);
+            }
+          } else if ( argc == 3 && args[1]->IsString() ) {
+            NanUtf8String string( args[1] );
+            gravity = GetGravityFromString(*string);
+            if ( gravity == Magick::ForgetGravity ) {
+              geometry = *string;
+              if ( geometry.isValid() ) {
+                geometry.xNegative(false);
+                geometry.yNegative(false);
+                compositejob.Setup(source, new NanUtf8String( args[2] ), geometry);
+              }
+            } else {
+              compositejob.Setup(source, new NanUtf8String( args[2] ), gravity);
+            }
+          }
+        }
+      } else if ( argc == 1 ) {
+        Local<Object> options = args[0].As<Object>();
+        NanUtf8String *compose = NULL;
+        if ( options->Has(NanNew(imageSym)) ) {
+          NODEMAGICK_UNWRAP_IMAGE_SOURCE( options->Get(NanNew(imageSym)) );
+        }
+        if ( options->Has(NanNew(composeSym)) ) {
+          compose = new NanUtf8String( options->Get(NanNew(composeSym)) );
+        }
+        if ( options->Has(NanNew(geometrySym)) ) {
+          Local<Value> size = options->Get(NanNew(geometrySym));
+          if ( size->IsArray() ) {
+            SetGeometryFromV8Array( geometry, size.As<Array>() );
+          } else if ( size->IsString() ) {
+            geometry = *NanUtf8String( size );
+            geometry.xNegative(false);
+            geometry.yNegative(false);
+          }
+        }
+        if ( geometry.isValid() ) {
+          compositejob.Setup(source, compose, geometry);
+        } else if ( options->Has(NanNew(xSym)) && options->Has(NanNew(ySym)) ) {
+          compositejob.Setup(source, compose,
+            options->Get(NanNew(xSym))->Int32Value(),
+            options->Get(NanNew(ySym))->Int32Value());
+        } else {
+          if ( options->Has(NanNew(gravitySym)) ) {
+            gravity = GetGravityFromString( *NanUtf8String( options->Get(NanNew(gravitySym)) ) );
+          }
+          compositejob.Setup(source, compose, gravity);
+        }
+      }
+    }
+
+    NODEMAGICK_FINISH_MUTUAL_WORKER(ImageCompositeJob, compositejob, "composite()'s arguments should be Image, strings and numbers");
   }
 
   /**

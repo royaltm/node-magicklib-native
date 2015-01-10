@@ -54,6 +54,13 @@ namespace NodeMagick {
       }
   };
 
+  class ImageCompositeOperatorException: public exception {
+    public:
+      virtual const char* what(void) const throw() {
+        return "Unrecognized composite operator";
+      }
+  };
+
   class ImagePixel {
     public:
       ImagePixel(ssize_t x_, ssize_t y_) : x( x_ ), y( y_ ) {}
@@ -177,6 +184,25 @@ namespace NodeMagick {
     private:
       string commentStr;
       auto_ptr<NanUtf8String> comment;
+  };
+
+  typedef enum {
+    CompositeGravity, CompositeGeometry, CompositeOffset
+  } CompositeType;
+
+  class ImageCompositeJob : public ImageMutualProcessJob {
+    public:
+      ImageCompositeJob(ImageMutualKit &kit);
+      void Setup(Image *source_, NanUtf8String *compose_, Magick::Geometry &geometry_);
+      void Setup(Image *source_, NanUtf8String *compose_, Magick::GravityType gravity_);
+      void Setup(Image *source_, NanUtf8String *compose_, ssize_t x_, ssize_t y_);
+      void ProcessImagesSynchronized(Image *image, Image *source);
+    private:
+      CompositeType type;
+      ssize_t x, y;
+      Magick::Geometry geometry;
+      Magick::GravityType gravity;
+      auto_ptr<NanUtf8String> compose;
   };
 
   class ImageCopyJob : public ImageProcessJob {

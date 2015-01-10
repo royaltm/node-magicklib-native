@@ -317,6 +317,57 @@ namespace NodeMagick {
     return NanNew<String>(commentStr);
   }
 
+  /* ImageCompositeJob */
+
+  ImageCompositeJob::ImageCompositeJob(ImageMutualKit &kit_) : ImageMutualProcessJob(kit_) {}
+
+  void ImageCompositeJob::Setup(Image *source_, NanUtf8String *compose_, Magick::GravityType gravity_) {
+    ImageMutualProcessJob::Setup(source_);
+    compose.reset(compose_);
+    gravity = gravity_;
+    type = CompositeGravity;
+  }
+
+  void ImageCompositeJob::Setup(Image *source_, NanUtf8String *compose_, Magick::Geometry &geometry_) {
+    ImageMutualProcessJob::Setup(source_);
+    compose.reset(compose_);
+    geometry = geometry_;
+    type = CompositeGeometry;
+  }
+
+  void ImageCompositeJob::Setup(Image *source_, NanUtf8String *compose_, ssize_t x_, ssize_t y_) {
+    ImageMutualProcessJob::Setup(source_);
+    compose.reset(compose_);
+    x = x_;
+    y = y_;
+    type = CompositeOffset;
+  }
+
+  void ImageCompositeJob::ProcessImagesSynchronized(Image *image, Image *source) {
+    NanUtf8String *compose_ = compose.get();
+    ssize_t composeType = (ssize_t) Magick::OverCompositeOp;
+    if ( compose_ != NULL ) {
+      composeType = MagickCore::ParseCommandOption(MagickCore::MagickComposeOptions, Magick::MagickFalse, **compose_);
+      if ( composeType == -1 )
+        throw ImageCompositeOperatorException();
+    }
+
+    switch(type) {
+      case CompositeGravity:
+        image->GetMagickImage()->composite(*source->GetMagickImage(), gravity,
+          (Magick::CompositeOperator) composeType);
+        break;
+      case CompositeGeometry:
+        image->GetMagickImage()->composite(*source->GetMagickImage(), geometry,
+          (Magick::CompositeOperator) composeType);
+        break;
+      case CompositeOffset:
+        image->GetMagickImage()->composite(*source->GetMagickImage(), x, y,
+          (Magick::CompositeOperator) composeType);
+        break;
+    }
+  }
+
   /* ImageCopyJob */
 
   ImageCopyJob::ImageCopyJob() : ImageProcessJob(true), autoCopy(-1) {}
