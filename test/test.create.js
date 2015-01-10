@@ -238,13 +238,13 @@ test("Read zero-length blob", function(t) {
   im.read(new Buffer(0), function(err, im2) {
     t.strictEqual(im2, void(0))
     t.type(err, Error)
-    t.like(err, (/zero-length blob not permitted/))
+    t.like(err.toString(), (/zero-length blob not permitted/))
     t.ok(!im.empty, "is not empty")
   })
   im.ping(new Buffer(0), function(err, im2) {
     t.strictEqual(im2, void(0))
     t.type(err, Error)
-    t.like(err, (/unrecognized image format/))
+    t.like(err.toString(), (/unrecognized image format/))
     t.ok(!im.empty, "is not empty")
   })
 })
