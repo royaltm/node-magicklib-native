@@ -35,7 +35,7 @@ function testComposition(t, im, src, x, y) {
 test("image.composite", function (t) {
   var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", type: "truecolor", magick: "PNG"})
 
-  t.plan(6 + 20*2*(3 + 10) + 8*2*(3 + 10))
+  t.plan(7 + 20*2*(3 + 10) + 8*2*(3 + 10))
 
   t.throws(function() { im.composite(new Image().begin()) },
       {name: "Error", message: "Could not synchronize images"})
@@ -55,7 +55,10 @@ test("image.composite", function (t) {
   var src = new Image(blobImage).resize(120,160,"fill").close(false)
 
   t.throws(function() { im.composite({}) },
-      {name: "TypeError", message: "missing Image"});
+      new TypeError("composite()'s image option is not an Image"));
+
+  t.throws(function() { im.composite() },
+      new TypeError("composite()'s arguments should be Image, strings and numbers"));
 
   [
     im.composite.bind(im, src),

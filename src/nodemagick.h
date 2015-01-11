@@ -28,6 +28,8 @@ namespace NodeMagick {
   using namespace node;
   using namespace v8;
 
+  #define NODEMAGICK_KEY(key) NanNew(key ## Sym)
+
   extern Persistent<String> batchSym;
   extern Persistent<String> autoCopySym;
   extern Persistent<String> autoCloseSym;
@@ -58,6 +60,7 @@ namespace NodeMagick {
   extern Persistent<String> composeSym;
   extern Persistent<String> geometrySym;
   extern Persistent<String> typeSym;
+  extern Persistent<String> pointsSym;
 
   //extern Persistent<Function> bufferFunction;
 

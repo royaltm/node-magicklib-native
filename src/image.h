@@ -100,9 +100,6 @@ namespace NodeMagick {
 
       static Persistent<FunctionTemplate> constructor;
 
-      static const char * const ResizeTags[];
-      static const char ResizeTagValues[];
-
     protected:
       NAN_INLINE void ProcessJob(ImageProcessJob &job);
       NAN_INLINE virtual Local<Value> ReturnedValue(void);

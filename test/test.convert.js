@@ -28,9 +28,14 @@ function syncAsync(method, callback) {
 
 test("image.blur", function (t) {
   var im = new Image({src: blobT160, autoCopy: true, autoClose: false})
-  t.plan(2 + 2*2*5 + 2*2*5 + 2*2*7 + 2*2*5)
+  t.plan(6 + 2*2*5 + 2*2*5 + 2*2*7 + 2*2*5)
   t.deepEqual(im.color(9,9).rgba(), [ 0, 0, 0, 1 ])
-  t.deepEqual(im.color(11,11).rgba(), [ 0, 0, 0, 0 ]);
+  t.deepEqual(im.color(11,11).rgba(), [ 0, 0, 0, 0 ])
+  t.throws(function(){ im.blur({sigma:NaN}) }, new TypeError("blur() needs sigma number option"));
+  t.throws(function(){ im.blur({}) }, new TypeError("blur() needs sigma number option"));
+  t.throws(function(){ im.blur(void(0)) }, new TypeError("blur()'s sigma is not a number"));
+  t.throws(function(){ im.blur() }, new TypeError("blur()'s arguments should be number(s)[, string][, boolean]"));
+
   [
     im.blur.bind(im, 1),
     im.blur.bind(im, {sigma: 1})
@@ -86,7 +91,7 @@ test("image.blur", function (t) {
 
 test("image.crop", function (t) {
   var im = new Image({src: blobT160, autoCopy: true, autoClose: false})
-  t.plan(8 + 6*2*9 + 6*2*9)
+  t.plan(10 + 6*2*9 + 6*2*9)
   t.deepEqual(im.size()               , [ 160, 160 ])
   t.deepEqual(im.color(0,    0).rgba(), [ 0, 0, 0, 1 ])
   t.deepEqual(im.color(9,    9).rgba(), [ 0, 0, 0, 1 ])
@@ -94,7 +99,11 @@ test("image.crop", function (t) {
   t.deepEqual(im.color(60,  60).rgba(), [ 0, 0, 0, 1 ])
   t.deepEqual(im.color(69,  69).rgba(), [ 0, 0, 0, 1 ])
   t.deepEqual(im.color(80,  80).rgba(), [ 1, 1, 1, 0 ])
-  t.deepEqual(im.color(150,150).rgba(), [ 0, 0, 0, 1 ]);
+  t.deepEqual(im.color(150,150).rgba(), [ 0, 0, 0, 1 ])
+
+  t.throws(function(){ im.crop({}) }, new TypeError("crop() needs proper size or width and height options"));
+  t.throws(function(){ im.crop() }, new TypeError("crop()'s arguments should be string or 4 numbers"));
+
   [
     im.crop.bind(im, 160, 160, 10, 10),
     im.crop.bind(im, [160, 160, 10, 10]),
@@ -139,7 +148,7 @@ test("image.crop", function (t) {
 
 test("image.extent", function (t) {
   var im = new Image({src: blobTransparent, autoCopy: true, autoClose: false, background: "transparent"})
-  t.plan(9 + 14*2*11 + 12*2*10 + 12*2*11 + 28*2*12);
+  t.plan(11 + 14*2*11 + 12*2*10 + 12*2*11 + 28*2*12);
   t.deepEqual(im.size()               , [ 16, 16 ])
   t.deepEqual(im.color(0,    0).rgba(), [ 0, 0, 0, 1 ])
   t.deepEqual(im.color(1,    1).rgba(), [ 0, 0, 0, 0 ])
@@ -148,7 +157,11 @@ test("image.extent", function (t) {
   t.deepEqual(im.color(8,    8).rgba(), [ 1, 1, 1, 0 ])
   t.deepEqual(im.color(9,    9).rgba(), [ 0, 0, 0, 1 ])
   t.deepEqual(im.color(14,  14).rgba(), [ 0, 0, 0, 0 ])
-  t.deepEqual(im.color(15,  15).rgba(), [ 0, 0, 0, 1 ]);
+  t.deepEqual(im.color(15,  15).rgba(), [ 0, 0, 0, 1 ])
+
+  t.throws(function(){ im.extent() }, new TypeError("extent()'s arguments should be string or number(s)"));
+  t.throws(function(){ im.extent({}) }, new TypeError("extent() needs proper size or width and height options"));
+
   [
     im.extent.bind(im, 14, 14),
     im.extent.bind(im, 14, 14, "centeR"),
@@ -325,7 +338,11 @@ test("image.negate", function (t) {
 
 test("image.noise", function (t) {
   var im = new Image({src: blobImage, magick: "PNG", autoCopy: true, autoClose: false})
-  t.plan(2*2*2 + 2*2*2)
+  t.plan(2 + 2*2*2 + 2*2*2)
+
+  t.throws(function(){ im.noise({}) }, new TypeError("noise() needs noise string option"));
+  t.throws(function(){ im.noise() }, new TypeError("noise()'s arguments should be strings"));
+
   var histogram0 = im.histogram();
   [
     im.noise.bind(im, "gaussian"),
@@ -392,8 +409,8 @@ test("image.quantize/histogram", function (t) {
   t.equal(pair.length, 2);
   t.type(pair[0], Color)
   t.type(pair[1], 'number')
-  t.throws(function() { im.quantize(-1) }, "number of colors should be > 0")
-  t.throws(function() { im.quantize({colors: -1}) }, "number of colors should be > 0");
+  t.throws(function() { im.quantize(-1) }, new TypeError("number of colors should be > 0"))
+  t.throws(function() { im.quantize({colors: -1}) }, new TypeError("number of colors should be > 0"));
   t.equal(im.quantize().type(), "Palette");
   [
     im.quantize.bind(im, 1),
@@ -475,9 +492,15 @@ test("image.reset", function (t) {
 
 test("image.resize", function (t) {
   var im = new Image({src: blobImage, autoCopy: true, autoClose: false});
-  t.plan(2 + 12*2*3 + 20*2*2 + 14*2*2 + 14*2*2 + 6*2*4 + 6*2*4);
+  t.plan(6 + 12*2*3 + 20*2*2 + 14*2*2 + 14*2*2 + 6*2*4 + 6*2*4);
   t.deepEqual(im.size(), [ 113, 150 ])
-  t.deepEqual(im.page,   "113x150");
+  t.deepEqual(im.page,   "113x150")
+
+  t.throws(function(){ im.resize({size: "foo"}) }, new TypeError("resize() needs proper size or width and height options"));
+  t.throws(function(){ im.resize({}) }, new TypeError("resize() needs proper size or width and height options"));
+  t.throws(function(){ im.resize("foo") }, new TypeError("resize()'s arguments should be string or numbers"));
+  t.throws(function(){ im.resize() }, new TypeError("resize()'s arguments should be string or numbers"));
+
   var histogram0 = im.histogram()
     , histogramFilter
     , histogramScale
@@ -632,11 +655,17 @@ test("image.rotate", function (t) {
 
 test("image.sharpen", function (t) {
   var im = new Image({src: blobT160, autoClose: false}).blur(1).copy(true)
-  t.plan(4 + 2*2*5 + 4*2*5 + 2*2*5)
+  t.plan(8 + 2*2*5 + 4*2*5 + 2*2*5)
   t.deepEqual(im.color(9,9).rgb()         , [ 0, 0, 0 ])
   t.equal(im.color(9,9).alpha(100)|0  , 90)
   t.deepEqual(im.color(11,11).rgb()       , [ 0, 0, 0 ])
-  t.equal(im.color(11,11).alpha(100)|0, 12);
+  t.equal(im.color(11,11).alpha(100)|0, 12)
+
+  t.throws(function(){ im.sharpen({sigma:NaN}) }, new TypeError("sharpen() needs sigma number option"));
+  t.throws(function(){ im.sharpen({}) }, new TypeError("sharpen() needs sigma number option"));
+  t.throws(function(){ im.sharpen(void(0)) }, new TypeError("sharpen()'s sigma is not a number"));
+  t.throws(function(){ im.sharpen() }, new TypeError("sharpen()'s arguments should be number(s)[, string]"));
+
   [
     im.sharpen.bind(im, 1),
     im.sharpen.bind(im, {sigma: 1})

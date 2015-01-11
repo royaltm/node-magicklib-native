@@ -1,4 +1,5 @@
 #include "imageprocessor.h"
+#include "imageprocessor_opts.h"
 #include "image.h"
 #include <limits>
 #include <cmath>
@@ -41,8 +42,10 @@ namespace NodeMagick {
     barrier = kit.Barrier();
   }
 
-  void ImageMutualProcessJob::SetSynchronizeJob(ImageSynchronizeJob &job_) {
-    job = &job_;
+  ImageSynchronizeJob *ImageMutualProcessJob::SetupSynchronizeJob(ImageSynchronizeJob *job_) {
+    job = job_ == NULL ? new ImageSynchronizeJob(*source) : job_;
+    job->Setup(*this);
+    return job;
   }
 
   void ImageMutualProcessJob::Setup(Image *source_) {
@@ -174,7 +177,8 @@ namespace NodeMagick {
 
   /* ImageBlurJob */
 
-  ImageBlurJob::ImageBlurJob() : ImageProcessJob() {}
+  ImageBlurJob::ImageBlurJob()
+    : ImageProcessJob(), sigma(0.0), radius(0.0), gaussian(false), channel(NULL) {}
 
   void ImageBlurJob::Setup(double sigma_, double radius_, NanUtf8String *channel_, bool gaussian_) {
     sigma = sigma_;
@@ -229,21 +233,11 @@ namespace NodeMagick {
     ImageProcessJob::Setup();
   }
 
-  void ImageColorJob::Setup(size_t numpoints) {
-    points.reset( new vector<ImagePixel>() );
-    points->reserve(numpoints);
-    ImageProcessJob::Setup();
-  }
-
   void ImageColorJob::Setup(ssize_t x_, ssize_t y_, Magick::Color& color_) {
     x = x_;
     y = y_;
     color = color_;
     ImageProcessJob::Setup(false);
-  }
-
-  void ImageColorJob::Push(ssize_t x_, ssize_t y_) {
-    points->push_back(ImagePixel(x_, y_));
   }
 
   void ImageColorJob::ProcessImage(Image *image) {
@@ -314,7 +308,9 @@ namespace NodeMagick {
 
   /* ImageCompositeJob */
 
-  ImageCompositeJob::ImageCompositeJob(ImageMutualKit &kit_) : ImageMutualProcessJob(kit_) {}
+  ImageCompositeJob::ImageCompositeJob(ImageMutualKit &kit_)
+    : ImageMutualProcessJob(kit_)
+    , type(CompositeGravity), x(0), y(0), gravity(Magick::CenterGravity), compose(NULL) {}
 
   void ImageCompositeJob::Setup(Image *source_, NanUtf8String *compose_, Magick::GravityType gravity_) {
     ImageMutualProcessJob::Setup(source_);
@@ -407,7 +403,8 @@ namespace NodeMagick {
 
   /* ImageExtentJob */
 
-  ImageExtentJob::ImageExtentJob() : ImageProcessJob(), gravity( Magick::ForgetGravity ) {}
+  ImageExtentJob::ImageExtentJob()
+    : ImageProcessJob(), gravity(Magick::ForgetGravity) {}
 
   void ImageExtentJob::Setup(Magick::Geometry& geometry_) {
     geometry = geometry_;
@@ -534,7 +531,8 @@ namespace NodeMagick {
 
   /* ImageNoiseJob */
 
-  ImageNoiseJob::ImageNoiseJob() : ImageProcessJob() {}
+  ImageNoiseJob::ImageNoiseJob()
+    : ImageProcessJob(), noise(NULL), channel(NULL) {}
 
   void ImageNoiseJob::Setup(NanUtf8String *noise_) {
     noise.reset(noise_);
@@ -704,7 +702,8 @@ namespace NodeMagick {
 
   /* ImageQuantizeJob */
 
-  ImageQuantizeJob::ImageQuantizeJob() : ImageProcessJob() {}
+  ImageQuantizeJob::ImageQuantizeJob()
+    : ImageProcessJob(), colors(0), colorSpace(NULL), dither(-1) {}
 
   void ImageQuantizeJob::Setup(size_t colors_, NanUtf8String *colorSpace_, char dither_) {
     dither = dither_;
@@ -789,16 +788,17 @@ namespace NodeMagick {
 
   /* ImageResizeJob */
 
-  ImageResizeJob::ImageResizeJob() : ImageProcessJob() {}
+  ImageResizeJob::ImageResizeJob()
+    : ImageProcessJob(), resizeType(ResizeFilter) {}
 
-  void ImageResizeJob::Setup(Magick::Geometry& geometry_, ResizeType type_) {
+  void ImageResizeJob::Setup(Magick::Geometry& geometry_, char *mode) {
     geometry = geometry_;
-    type = type_;
+    if ( mode != NULL ) ReadResizeMode(mode);
     ImageProcessJob::Setup();
   }
 
   void ImageResizeJob::ProcessImage(Image *image) {
-    switch(type) {
+    switch(resizeType) {
       case ResizeScale:
         image->GetMagickImage()->scale(geometry);
         break;
@@ -837,7 +837,8 @@ namespace NodeMagick {
 
   /* ImageSharpenJob */
 
-  ImageSharpenJob::ImageSharpenJob() : ImageProcessJob() {}
+  ImageSharpenJob::ImageSharpenJob()
+    : ImageProcessJob(), sigma(0.0), radius(0.0), channel(NULL) {}
 
   void ImageSharpenJob::Setup(double sigma_, double radius_, NanUtf8String *channel_) {
     sigma = sigma_;

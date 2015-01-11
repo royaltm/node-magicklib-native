@@ -12,6 +12,19 @@ namespace NodeMagick {
 
   using namespace std;
 
+  class ImageOptionsException: public exception {
+    public:
+      ImageOptionsException(const char *message_) {
+        message = message_;
+      }
+      virtual const char* what(void) const throw() {
+        return message;
+      }
+    private:
+      const char *message;
+      ImageOptionsException(void);
+  };
+
   class ImageSynchronizeException: public exception {
     public:
       virtual const char* what(void) const throw() {
@@ -143,6 +156,7 @@ namespace NodeMagick {
   class ImageBlurJob : public ImageProcessJob {
     public:
       ImageBlurJob(void);
+      void Setup(const Handle<Object> &options);
       void Setup(double sigma_, double radius_, NanUtf8String *channel_, bool gaussian_);
       void ProcessImage(Image *image);
     private:
@@ -161,10 +175,10 @@ namespace NodeMagick {
   class ImageColorJob : public ImageProcessJob {
     public:
       ImageColorJob(void);
+      void Setup(const Handle<Object> &options);
+      void Setup(const Handle<Array> &points);
       void Setup(ssize_t x_, ssize_t y_);
-      void Setup(size_t numpoints);
       void Setup(ssize_t x_, ssize_t y_, Magick::Color& color_);
-      void Push(ssize_t x_, ssize_t y_);
       void ProcessImage(Image *image);
       Local<Value> ReturnedValue(void);
     private:
@@ -193,6 +207,7 @@ namespace NodeMagick {
   class ImageCompositeJob : public ImageMutualProcessJob {
     public:
       ImageCompositeJob(ImageMutualKit &kit);
+      Image *Setup(const Handle<Object> &options, Handle<Object> &sourceObject);
       void Setup(Image *source_, NanUtf8String *compose_, Magick::Geometry &geometry_);
       void Setup(Image *source_, NanUtf8String *compose_, Magick::GravityType gravity_);
       void Setup(Image *source_, NanUtf8String *compose_, ssize_t x_, ssize_t y_);
@@ -208,6 +223,7 @@ namespace NodeMagick {
   class ImageCopyJob : public ImageProcessJob {
     public:
       ImageCopyJob(void);
+      void Setup(const Handle<Object> &options);
       void Setup(void);
       void Setup(bool autoCopy_);
       void ProcessImage(Image *image);
@@ -219,6 +235,7 @@ namespace NodeMagick {
   class ImageCropJob : public ImageProcessJob {
     public:
       ImageCropJob(void);
+      void Setup(const Handle<Object> &options);
       void Setup(Magick::Geometry& geometry_);
       void ProcessImage(Image *image);
     private:
@@ -228,6 +245,7 @@ namespace NodeMagick {
   class ImageExtentJob : public ImageProcessJob {
     public:
       ImageExtentJob(void);
+      void Setup(const Handle<Object> &options);
       void Setup(Magick::Geometry& geometry_);
       void Setup(Magick::Geometry& geometry_, Magick::GravityType gravity_);
       void Setup(Magick::Geometry& geometry_, Magick::Color& color_);
@@ -294,6 +312,7 @@ namespace NodeMagick {
   class ImageNoiseJob : public ImageProcessJob {
     public:
       ImageNoiseJob(void);
+      void Setup(const Handle<Object> &options);
       void Setup(NanUtf8String *noise_);
       void Setup(NanUtf8String *noise_, NanUtf8String *channel_);
       void ProcessImage(Image *image);
@@ -331,9 +350,9 @@ namespace NodeMagick {
   };
 
   class ImagePropertiesJob : public ImageProcessJob {
-    friend class Image;
     public:
       ImagePropertiesJob(void);
+      void Setup(const Handle<Object> &options);
       void Setup(bool readProperties_);
       void ProcessImage(Image *image);
       Local<Value> ReturnedValue(void);
@@ -363,6 +382,7 @@ namespace NodeMagick {
   class ImageQuantizeJob : public ImageProcessJob {
     public:
       ImageQuantizeJob(void);
+      void Setup(const Handle<Object> &options);
       void Setup(size_t colors_, NanUtf8String *colorSpace_ = NULL, char dither_ = -1);
       void ProcessImage(Image *image);
     private:
@@ -399,11 +419,15 @@ namespace NodeMagick {
   class ImageResizeJob : public ImageProcessJob {
     public:
       ImageResizeJob(void);
-      void Setup(Magick::Geometry& geometry_, ResizeType type_);
+      void Setup(const Handle<Object> &options);
+      void Setup(Magick::Geometry& geometry_, char *mode = NULL);
       void ProcessImage(Image *image);
     private:
+      static const char * const ResizeTags[];
+      static const char ResizeTagValues[];
+      NAN_INLINE void ReadResizeMode(char *mode);
       Magick::Geometry geometry;
-      ResizeType type;
+      ResizeType resizeType;
   };
 
   class ImageRestoreJob : public ImageProcessJob {
@@ -425,6 +449,7 @@ namespace NodeMagick {
   class ImageSharpenJob : public ImageProcessJob {
     public:
       ImageSharpenJob(void);
+      void Setup(const Handle<Object> &options);
       void Setup(double sigma_, double radius_, NanUtf8String *channel_);
       void ProcessImage(Image *image);
     private:

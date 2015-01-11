@@ -541,173 +541,41 @@ namespace NodeMagick {
   NAN_METHOD(Image::Blur) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageBlurJob, blur)
 
-    double sigma(0.0);
-    double radius(0.0);
-    NanUtf8String *channel(NULL);
-    bool gaussian(false);
-    if ( argc == 1 && args[0]->IsObject() ) {
-      Local<Object> options = args[0].As<Object>();
-      if ( options->Has(NanNew(sigmaSym)) )
-        sigma = options->Get(NanNew(sigmaSym))->NumberValue();
-      if ( options->Has(NanNew(radiusSym)) )
-        radius = options->Get(NanNew(radiusSym))->NumberValue();
-      if ( options->Has(NanNew(channelSym)) )
-        channel = new NanUtf8String( options->Get(NanNew(channelSym)) );
-      if ( options->Has(NanNew(gaussianSym)) )
-        gaussian = options->Get(NanNew(gaussianSym))->BooleanValue();
-      blur.Setup(sigma, radius, channel, gaussian);
-    } else if ( argc >= 1 && argc <= 4 ) {
-      sigma = args[0]->NumberValue();
-      for( uint32_t i = 1; i < argc; ++i ) {
-        if ( args[i]->IsString() ) {
-          channel = new NanUtf8String(args[i]);
-        } else if (args[i]->IsBoolean() ) {
-          gaussian = args[i]->BooleanValue() ? 1 : 0;
-        } else {
-          radius = args[i]->NumberValue();
+    try {
+      if ( argc == 1 && args[0]->IsObject() ) {
+
+        blur.Setup( args[0].As<Object>() );
+
+      } else if ( argc >= 1 && argc <= 4 ) {
+
+        double sigma( args[0]->NumberValue() );
+        double radius(0.0);
+        NanUtf8String *channel(NULL);
+        bool gaussian(false);
+        for( uint32_t i = 1; i < argc; ++i ) {
+          if ( args[i]->IsString() ) {
+            channel = new NanUtf8String(args[i]);
+          } else if (args[i]->IsBoolean() ) {
+            gaussian = args[i]->BooleanValue() ? 1 : 0;
+          } else {
+            radius = args[i]->NumberValue();
+          }
         }
+
+        if ( isnan(sigma) )
+          throw ImageOptionsException("blur()'s sigma is not a number");
+        blur.Setup(sigma, radius, channel, gaussian);
+
       }
-      blur.Setup(sigma, radius, channel, gaussian);
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
     }
 
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageBlurJob, blur, "blur()'s arguments should be number(s)[, string][, boolean]");
-  }
-
-  /**
-   * Composite images
-   *
-   * image.composite(composeImage[, gravity="center"][, compose="over"][callback(err, image)])
-   * image.composite(composeImage[, geometry][, compose="over"][callback(err, image)])
-   * image.composite(composeImage[, x, y][, compose="over"][callback(err, image)])
-   * image.composite(options[, callback(err, image)])
-   *
-   * options:
-   *
-   *   - image: an image to compose onto image
-   *   - gravity: gravity string, e.g: "southwest"
-   *   - geometry: geometry [_, _, x, y] or string, e.g: "+100-50"
-   *   - x: x offset
-   *   - y: y offset
-   *   - compose: compose string, "multiply"
-   **/
-  NAN_METHOD(Image::Composite) {
-    NODEMAGICK_BEGIN_MUTUAL_WORKER(ImageCompositeJob, compositejob)
-
-    if ( argc >= 1 && args[0]->IsObject() ) {
-      Magick::Geometry geometry;
-      Magick::GravityType gravity = Magick::CenterGravity;
-      NODEMAGICK_UNWRAP_IMAGE_SOURCE(args[0]);
-      if ( NODEMAGICK_IMAGE_SOURCE_UNWRAPPED() ) {
-        if ( argc == 1) {
-          compositejob.Setup(source, NULL, gravity);
-        } if ( argc >= 2 && args[1]->IsArray() ) {
-          SetGeometryFromV8Array( geometry, args[1].As<Array>() );
-          if ( argc == 3 && args[2]->IsString() ) {
-            compositejob.Setup(source, new NanUtf8String( args[2] ), geometry);
-          } else if ( argc == 2 ) {
-            compositejob.Setup(source, NULL, geometry);
-          }
-        } else if ( argc == 2 && args[1]->IsString() ) {
-          auto_ptr<NanUtf8String> compose( new NanUtf8String( args[1] ) );
-          gravity = GetGravityFromString(**compose);
-          if ( gravity != Magick::ForgetGravity ) {
-            compositejob.Setup(source, NULL, gravity);
-          } else {
-            geometry = **compose;
-            if ( geometry.isValid() ) {
-              geometry.xNegative(false);
-              geometry.yNegative(false);
-              compositejob.Setup(source, NULL, geometry);
-            } else {
-              compositejob.Setup(source, compose.release(), Magick::CenterGravity);
-            }
-          }
-        } else if ( argc >= 3 ) {
-          if ( args[1]->IsNumber() && args[2]->IsNumber() ) {
-            ssize_t x = args[1]->Int32Value(),
-                    y = args[2]->Int32Value();
-            if ( argc == 4 && args[3]->IsString() ) {
-              compositejob.Setup(source, new NanUtf8String( args[3] ), x, y);
-            } else if ( argc == 3 ) {
-              compositejob.Setup(source, NULL, x, y);
-            }
-          } else if ( argc == 3 && args[1]->IsString() ) {
-            NanUtf8String string( args[1] );
-            gravity = GetGravityFromString(*string);
-            if ( gravity == Magick::ForgetGravity ) {
-              geometry = *string;
-              if ( geometry.isValid() ) {
-                geometry.xNegative(false);
-                geometry.yNegative(false);
-                compositejob.Setup(source, new NanUtf8String( args[2] ), geometry);
-              }
-            } else {
-              compositejob.Setup(source, new NanUtf8String( args[2] ), gravity);
-            }
-          }
-        }
-      } else if ( argc == 1 ) {
-        Local<Object> options = args[0].As<Object>();
-        NanUtf8String *compose = NULL;
-        if ( options->Has(NanNew(imageSym)) ) {
-          NODEMAGICK_UNWRAP_IMAGE_SOURCE( options->Get(NanNew(imageSym)) );
-        }
-        if ( options->Has(NanNew(composeSym)) ) {
-          compose = new NanUtf8String( options->Get(NanNew(composeSym)) );
-        }
-        if ( options->Has(NanNew(geometrySym)) ) {
-          Local<Value> size = options->Get(NanNew(geometrySym));
-          if ( size->IsArray() ) {
-            SetGeometryFromV8Array( geometry, size.As<Array>() );
-          } else if ( size->IsString() ) {
-            geometry = *NanUtf8String( size );
-            geometry.xNegative(false);
-            geometry.yNegative(false);
-          }
-        }
-        if ( geometry.isValid() ) {
-          compositejob.Setup(source, compose, geometry);
-        } else if ( options->Has(NanNew(xSym)) && options->Has(NanNew(ySym)) ) {
-          compositejob.Setup(source, compose,
-            options->Get(NanNew(xSym))->Int32Value(),
-            options->Get(NanNew(ySym))->Int32Value());
-        } else {
-          if ( options->Has(NanNew(gravitySym)) ) {
-            gravity = GetGravityFromString( *NanUtf8String( options->Get(NanNew(gravitySym)) ) );
-          }
-          compositejob.Setup(source, compose, gravity);
-        }
-      }
-    }
-
-    NODEMAGICK_FINISH_MUTUAL_WORKER(ImageCompositeJob, compositejob, "composite()'s arguments should be Image, strings and numbers");
-  }
-
-  /**
-   * Copy image
-   *
-   * image.copy([callback(err, newimage)])
-   * image.copy(autoCopy[, callback(err, newimage)]) -> image
-   * image.copy(options[, callback(err, newimage)]) -> image
-   *
-   * options:
-   *
-   *   - autoCopy: set auto copy mode, default: false
-   **/
-  NAN_METHOD(Image::Copy) {
-    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageCopyJob, copyjob)
-
-    if ( argc >= 1 ) {
-      if ( args[0]->IsObject() ) {
-        copyjob.Setup( NanBooleanOptionValue(args[0].As<Object>(), NanNew(autoCopySym)) );
-      } else if ( args[0]->IsBoolean() ) {
-        copyjob.Setup( args[0]->BooleanValue() );
-      }
-    } else if (argc == 0) {
-      copyjob.Setup();
-    }
-
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageCopyJob, copyjob, "copy()'s 1st argument should be boolean or Object");
   }
 
   /**
@@ -745,6 +613,70 @@ namespace NodeMagick {
   }
 
   /**
+   * Color pixel plot or peek
+   *
+   * in synchronous context:
+   * image.color(x, y) -> color
+   * image.color(points) -> colors
+   * image.color(x, y, newcolor) -> image
+   * image.color(options) -> image
+   *
+   * in asynchronous context:
+   * image.color(x, y, callback(err, color))
+   * image.color(points, callback(err, colors))
+   * image.color(x, y, newcolor, callback(err, image))
+   * image.color(options, callback(err, image))
+   *
+   * points: an Array of [x, y] tuples
+   * newcolor: string or Color object
+   * color: Color object
+   * colors: an Array of Color objects
+   *
+   * options:
+   *   - points: an Array of [x, y] tuples
+   *   or
+   *   - x: x offset number
+   *   - y: y offset number
+   *   - color:  string or Color object
+   **/
+  NAN_METHOD(Image::Color) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageColorJob, colorjob)
+
+    try {
+      if ( argc == 1 ) {
+        if ( args[0]->IsArray() ) {
+
+          colorjob.Setup( args[0].As<Array>() );
+
+        } else if ( args[0]->IsObject() ) {
+
+          colorjob.Setup( args[0].As<Object>() );
+
+        }
+      } else if ( argc >= 2 && argc <= 3 ) {
+
+        ssize_t x = args[0]->Int32Value();
+        ssize_t y = args[1]->Int32Value();
+
+        if ( argc == 2 ) {
+          colorjob.Setup(x, y);
+        } else {
+          NODEMAGICK_COLOR_FROM_VALUE(color, args[2]);
+          colorjob.Setup(x, y, color);
+        }
+      }
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageColorJob, colorjob, "color()'s arguments should be Array or Numbers and Color");
+  }
+
+  /**
    * Comment image
    *
    * image.comment(comment[,callback(err, image)])
@@ -764,60 +696,120 @@ namespace NodeMagick {
   }
 
   /**
-   * Color pixel plot or peek
+   * Composite images
    *
-   * in synchronous context:
-   * image.color(x, y) -> color
-   * image.color(points) -> colors
-   * image.color(x, y, newcolor) -> image
+   * image.composite(composeImage[, gravity="center"][, compose="over"][, callback(err, image)])
+   * image.composite(composeImage[, geometry][, compose="over"][, callback(err, image)])
+   * image.composite(composeImage[, x, y][, compose="over"][, callback(err, image)])
+   * image.composite(options[, callback(err, image)])
    *
-   * in asynchronous context:
-   * image.color(x, y, callback(err, color))
-   * image.color(points, callback(err, colors))
-   * image.color(x, y, newcolor, callback(err, image))
+   * options:
    *
-   * points: an Array of [x, y] tuples
-   * newcolor: string or Color object
-   * color: Color object
-   * colors: an Array of Color objects
+   *   - image: an image to compose onto image
+   *   - gravity: gravity string, e.g: "southwest"
+   *   - geometry: geometry [_, _, x, y] or string, e.g: "+100-50"
+   *   - x: x offset
+   *   - y: y offset
+   *   - compose: compose string, "multiply"
    **/
-  NAN_METHOD(Image::Color) {
-    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageColorJob, colorjob)
+  NAN_METHOD(Image::Composite) {
+    NODEMAGICK_BEGIN_MUTUAL_WORKER(ImageCompositeJob, compositejob)
 
-    if ( argc == 1 && args[0]->IsArray() ) {
-      Local<Array> points = args[0].As<Array>();
-      uint32_t numpixels = points->Length();
-
-      colorjob.Setup(numpixels);
-
-      for(uint32_t i = 0; i < numpixels; ++i) {
-        Local<Value> pointValue = points->Get(i);
-        if ( pointValue->IsArray() ) {
-          const Handle<Array> &point = pointValue.As<Array>();
-          if ( point->Length() >= 2 ) {
-            colorjob.Push(point->Get(0)->Int32Value(), point->Get(1)->Int32Value());
-          } else {
-            return NanThrowError("color()'s coordinate tuples must contain 2 numbers");
+    try {
+      if ( argc >= 1 && args[0]->IsObject() ) {
+        NODEMAGICK_UNWRAP_IMAGE_SOURCE(args[0]);
+        if ( NODEMAGICK_IMAGE_SOURCE_UNWRAPPED() ) {
+          if ( argc == 1) {
+            compositejob.Setup(source, NULL, Magick::CenterGravity);
+          } if ( argc >= 2 && args[1]->IsArray() ) {
+            Magick::Geometry geometry;
+            SetGeometryFromV8Array( geometry, args[1].As<Array>() );
+            if ( argc == 3 && args[2]->IsString() ) {
+              compositejob.Setup(source, new NanUtf8String( args[2] ), geometry);
+            } else if ( argc == 2 ) {
+              compositejob.Setup(source, NULL, geometry);
+            }
+          } else if ( argc == 2 && args[1]->IsString() ) {
+            auto_ptr<NanUtf8String> compose( new NanUtf8String( args[1] ) );
+            Magick::GravityType gravity( GetGravityFromString(**compose) );
+            if ( gravity != Magick::ForgetGravity ) {
+              compositejob.Setup(source, NULL, gravity);
+            } else {
+              Magick::Geometry geometry( **compose );
+              if ( geometry.isValid() ) {
+                geometry.xNegative(false);
+                geometry.yNegative(false);
+                compositejob.Setup(source, NULL, geometry);
+              } else {
+                compositejob.Setup(source, compose.release(), Magick::CenterGravity);
+              }
+            }
+          } else if ( argc >= 3 ) {
+            if ( args[1]->IsNumber() && args[2]->IsNumber() ) {
+              ssize_t x = args[1]->Int32Value(),
+                      y = args[2]->Int32Value();
+              if ( argc == 4 && args[3]->IsString() ) {
+                compositejob.Setup(source, new NanUtf8String( args[3] ), x, y);
+              } else if ( argc == 3 ) {
+                compositejob.Setup(source, NULL, x, y);
+              }
+            } else if ( argc == 3 && args[1]->IsString() ) {
+              NanUtf8String string( args[1] );
+              Magick::GravityType gravity( GetGravityFromString(*string) );
+              if ( gravity == Magick::ForgetGravity ) {
+                Magick::Geometry geometry( *string );
+                if ( geometry.isValid() ) {
+                  geometry.xNegative(false);
+                  geometry.yNegative(false);
+                  compositejob.Setup(source, new NanUtf8String( args[2] ), geometry);
+                }
+              } else {
+                compositejob.Setup(source, new NanUtf8String( args[2] ), gravity);
+              }
+            }
           }
-        } else {
-          return NanThrowError("color()'s Array argument should be an Array of coordinate tuples");
+        } else if ( argc == 1 ) {
+
+          source = compositejob.Setup( args[0].As<Object>(), sourceObject );
+
         }
       }
-
-    } else if ( argc >= 2 && argc <= 3 ) {
- 
-      ssize_t x = args[0]->Int32Value();
-      ssize_t y = args[1]->Int32Value();
- 
-      if ( argc == 2 ) {
-        colorjob.Setup(x, y);
-      } else {
-        NODEMAGICK_COLOR_FROM_VALUE(color, args[2]);
-        colorjob.Setup(x, y, color);
-      }
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
     }
 
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageColorJob, colorjob, "color()'s arguments should be Array or Numbers and Color");
+    NODEMAGICK_FINISH_MUTUAL_WORKER(ImageCompositeJob, compositejob, "composite()'s arguments should be Image, strings and numbers");
+  }
+
+  /**
+   * Copy image
+   *
+   * image.copy([callback(err, newimage)])
+   * image.copy(autoCopy[, callback(err, newimage)]) -> image
+   * image.copy(options[, callback(err, newimage)]) -> image
+   *
+   * options:
+   *
+   *   - autoCopy: set auto copy mode, default: false
+   **/
+  NAN_METHOD(Image::Copy) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageCopyJob, copyjob)
+
+    if ( argc >= 1 ) {
+      if ( args[0]->IsObject() ) {
+        copyjob.Setup( args[0].As<Object>() );
+      } else if ( args[0]->IsBoolean() ) {
+        copyjob.Setup( args[0]->BooleanValue() );
+      }
+    } else if (argc == 0) {
+      copyjob.Setup();
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageCopyJob, copyjob, "copy()'s 1st argument should be boolean or Object");
   }
 
   /**
@@ -840,51 +832,40 @@ namespace NodeMagick {
   NAN_METHOD(Image::Crop) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageCropJob, cropper)
 
-    if ( argc == 4 ) {
-      if ( args[0]->IsNumber() && args[1]->IsNumber() &&
-           args[2]->IsNumber() && args[3]->IsNumber() ) {
-        Magick::Geometry geometry(
-          args[0]->Uint32Value(),  args[1]->Uint32Value(),
-          args[2]->Int32Value(), args[3]->Int32Value(),
-          false, false);
-        cropper.Setup(geometry);
-      }
-    } else if ( argc == 1 ) {
-      if ( args[0]->IsString() ) {
-        Magick::Geometry geometry( *NanUtf8String(args[0]) );
-        geometry.xNegative(false);
-        geometry.yNegative(false);
-        cropper.Setup(geometry);
-      } else if ( args[0]->IsArray() ) {
-        Magick::Geometry geometry;
-        Local<Array> size( args[0].As<Array>() );
-        if ( SetGeometryFromV8Array( geometry, size ) ) {
+    try {
+      if ( argc == 4 ) {
+        if ( args[0]->IsNumber() && args[1]->IsNumber() &&
+             args[2]->IsNumber() && args[3]->IsNumber() ) {
+          Magick::Geometry geometry(
+            args[0]->Uint32Value(),  args[1]->Uint32Value(),
+            args[2]->Int32Value(), args[3]->Int32Value(),
+            false, false);
           cropper.Setup(geometry);
         }
-      } else if ( args[0]->IsObject() ) {
-        Local<Object> options = args[0].As<Object>();
-        Magick::Geometry geometry;
-        if ( options->Has(NanNew(sizeSym)) ) {
-          Local<Value> size = options->Get(NanNew(sizeSym));
-          if ( size->IsArray() ) {
-            SetGeometryFromV8Array( geometry, size.As<Array>() );
-          } else if ( size->IsString() ) {
-            geometry = *NanUtf8String( size );
-          }
-        } else if ( options->Has(NanNew(widthSym)) && options->Has(NanNew(heightSym)) ) {
-          geometry.width( options->Get(NanNew(widthSym))->Uint32Value() );
-          geometry.height( options->Get(NanNew(heightSym))->Uint32Value() );
-        }
-        if ( options->Has(NanNew(xSym)) && options->Has(NanNew(ySym)) ) {
-          geometry.xOff( options->Get(NanNew(xSym))->Int32Value() );
-          geometry.yOff( options->Get(NanNew(ySym))->Int32Value() );
-        }
-        if ( geometry.isValid() ) {
+      } else if ( argc == 1 ) {
+        if ( args[0]->IsString() ) {
+          Magick::Geometry geometry( *NanUtf8String(args[0]) );
           geometry.xNegative(false);
           geometry.yNegative(false);
           cropper.Setup(geometry);
+        } else if ( args[0]->IsArray() ) {
+          Magick::Geometry geometry;
+          Local<Array> size( args[0].As<Array>() );
+          if ( SetGeometryFromV8Array( geometry, size ) ) {
+            cropper.Setup(geometry);
+          }
+        } else if ( args[0]->IsObject() ) {
+
+          cropper.Setup( args[0].As<Object>() );
+
         }
       }
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
     }
 
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageCropJob, cropper, "crop()'s arguments should be string or 4 numbers");
@@ -978,100 +959,104 @@ namespace NodeMagick {
   NAN_METHOD(Image::Extent) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageExtentJob, extender)
 
-    if ( argc >= 1 ) {
-      Magick::GravityType gravity( Magick::ForgetGravity );
-      bool ignoreGravity = false;
-      Magick::Color color;
-      const char *errmsg(NULL);
-      if ( argc == 5 ) {
-        if ( ! SetColorFromV8Value( color, args[4], &errmsg ) )
-          return NanThrowError(errmsg);
-        argc = 4;
-      } else if ( ( argc == 3 || argc == 4 ) && args[argc - 2]->IsString() ) {
-        gravity = GetGravityFromString( *NanUtf8String(args[argc - 2]) );
-        if ( ! SetColorFromV8Value( color, args[argc - 1], &errmsg ) )
-          return NanThrowError(errmsg);
-        argc -= 2;
-      } else if ( ( argc == 2 || argc == 3 ) ) {
-        if ( args[argc - 1]->IsString() ) {
-          NanUtf8String gravityOrColorStr( args[argc - 1] );
-          gravity = GetGravityFromString( *gravityOrColorStr );
-          if ( gravity == Magick::ForgetGravity ) {
-            if ( strcasecmp( *gravityOrColorStr, "ignore" ) ) {
-              if ( ! SetColorFromString( color, *gravityOrColorStr, &errmsg ) )
-                return NanThrowError(errmsg);
+    try {
+      if ( argc >= 1 ) {
+        Magick::GravityType gravity( Magick::ForgetGravity );
+        bool ignoreGravity = false;
+        Magick::Color color;
+        const char *errmsg(NULL);
+        if ( argc == 5 ) {
+          if ( ! SetColorFromV8Value( color, args[4], &errmsg ) )
+            return NanThrowError(errmsg);
+          argc = 4;
+        } else if ( ( argc == 3 || argc == 4 ) && args[argc - 2]->IsString() ) {
+          gravity = GetGravityFromString( *NanUtf8String(args[argc - 2]) );
+          if ( ! SetColorFromV8Value( color, args[argc - 1], &errmsg ) )
+            return NanThrowError(errmsg);
+          argc -= 2;
+        } else if ( ( argc == 2 || argc == 3 ) ) {
+          if ( args[argc - 1]->IsString() ) {
+            NanUtf8String gravityOrColorStr( args[argc - 1] );
+            gravity = GetGravityFromString( *gravityOrColorStr );
+            if ( gravity == Magick::ForgetGravity ) {
+              if ( strcasecmp( *gravityOrColorStr, "ignore" ) ) {
+                if ( ! SetColorFromString( color, *gravityOrColorStr, &errmsg ) )
+                  return NanThrowError(errmsg);
+              } else {
+                ignoreGravity = true;
+              }
+            }
+            argc -= 1;
+          } else if ( NODEMAGICK_VALUE_IS_COLOR(args[argc - 1]) ) {
+            color = GetColorFromV8ColorObject( args[argc - 1].As<Object>() );
+            argc -= 1;
+          }
+        }
+        Magick::Geometry geometry;
+        if ( argc == 1 ) {
+          if ( args[0]->IsString() ) {
+            geometry = *NanUtf8String(args[0]);
+          } else if ( args[0]->IsArray() ) {
+            SetGeometryFromV8Array( geometry, args[0].As<Array>() );
+          } else if ( args[0]->IsObject() ) {
+            extender.Setup( args[0].As<Object>() );
+          }
+        } else if ( argc == 2 || argc == 4 ) {
+          if ( args[0]->IsNumber() && args[1]->IsNumber() ) {
+            geometry = Magick::Geometry(
+              args[0]->Uint32Value(), args[1]->Uint32Value(), 0, 0, false, false );
+            if ( argc == 4 && args[2]->IsNumber() && args[3]->IsNumber() ) {
+              geometry.xOff( args[2]->Int32Value() );
+              geometry.yOff( args[3]->Int32Value() );
+            } else if ( !ignoreGravity && gravity == Magick::ForgetGravity ) {
+              gravity = Magick::CenterGravity;
+            }
+          }
+        }
+        if ( geometry.isValid() ) {
+          if ( color.isValid() ) {
+            if ( gravity != Magick::ForgetGravity ) {
+              extender.Setup( geometry, color, gravity );
             } else {
-              ignoreGravity = true;
+              extender.Setup( geometry, color );
+            }
+          } else {
+            if ( gravity != Magick::ForgetGravity ) {
+              extender.Setup( geometry, gravity );
+            } else {
+              extender.Setup( geometry );
             }
           }
-          argc -= 1;
-        } else if ( NODEMAGICK_VALUE_IS_COLOR(args[argc - 1]) ) {
-          color = GetColorFromV8ColorObject( args[argc - 1].As<Object>() );
-          argc -= 1;
         }
       }
-      Magick::Geometry geometry;
-      if ( argc == 1 ) {
-        if ( args[0]->IsString() ) {
-          geometry = *NanUtf8String(args[0]);
-        } else if ( args[0]->IsArray() ) {
-          SetGeometryFromV8Array( geometry, args[0].As<Array>() );
-        } else if ( args[0]->IsObject() ) {
-          Local<Object> options = args[0].As<Object>();
-          if ( options->Has(NanNew(sizeSym)) ) {
-            Local<Value> size = options->Get(NanNew(sizeSym));
-            if ( size->IsArray() ) {
-              SetGeometryFromV8Array( geometry, size.As<Array>() );
-            } else if ( size->IsString() ) {
-              geometry = *NanUtf8String( size );
-            }
-          } else if ( options->Has(NanNew(widthSym)) && options->Has(NanNew(heightSym)) ) {
-            geometry.width( options->Get(NanNew(widthSym))->Uint32Value() );
-            geometry.height( options->Get(NanNew(heightSym))->Uint32Value() );
-            gravity = Magick::CenterGravity;
-          }
-          if ( options->Has(NanNew(xSym)) && options->Has(NanNew(ySym)) ) {
-            geometry.xOff( options->Get(NanNew(xSym))->Int32Value() );
-            geometry.yOff( options->Get(NanNew(ySym))->Int32Value() );
-            gravity = Magick::ForgetGravity;
-          } else if ( options->Has(NanNew(gravitySym)) ) {
-            gravity = GetGravityFromString( *NanUtf8String( options->Get(NanNew(gravitySym)) ) );
-          }
-          if ( options->Has(NanNew(colorSym)) ) {
-            if ( ! SetColorFromV8Value( color, options->Get(NanNew(colorSym)), &errmsg ) )
-              return NanThrowError(errmsg);
-          }
-        }
-      } else if ( argc == 2 || argc == 4 ) {
-        if ( args[0]->IsNumber() && args[1]->IsNumber() ) {
-          geometry = Magick::Geometry(
-            args[0]->Uint32Value(), args[1]->Uint32Value(), 0, 0, false, false );
-          if ( argc == 4 && args[2]->IsNumber() && args[3]->IsNumber() ) {
-            geometry.xOff( args[2]->Int32Value() );
-            geometry.yOff( args[3]->Int32Value() );
-          } else if ( !ignoreGravity && gravity == Magick::ForgetGravity ) {
-            gravity = Magick::CenterGravity;
-          }
-        }
-      }
-      if ( geometry.isValid() ) {
-        if ( color.isValid() ) {
-          if ( gravity != Magick::ForgetGravity ) {
-            extender.Setup( geometry, color, gravity );
-          } else {
-            extender.Setup( geometry, color );
-          }
-        } else {
-          if ( gravity != Magick::ForgetGravity ) {
-            extender.Setup( geometry, gravity );
-          } else {
-            extender.Setup( geometry );
-          }
-        }
-      }
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
     }
+
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageExtentJob, extender, "extent()'s arguments should be string or number(s)");
   }
+
+  /**
+   * Fill image
+   *
+   * image.fill(texture, x, y[, border][, callback(err, image)])
+   * image.fill(texture, point[, border][, callback(err, image)])
+   *
+   * options:
+   *
+   *   - texture: color string, Color object instance or texture Image
+   *   - point: [x, y] or string, e.g: "+100-50"
+   *   - x: x offset
+   *   - y: y offset
+   *   - border: border color string or Color object instance
+   **/
+  // NAN_METHOD(Image::Fill) {
+
+  // }
 
   /**
    * Filter for resize
@@ -1190,23 +1175,23 @@ namespace NodeMagick {
   NAN_METHOD(Image::Noise) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageNoiseJob, noisejob)
 
-    if ( argc == 1 ) {
-      if ( args[0]->IsString() ) {
-        noisejob.Setup( new NanUtf8String(args[0]) );
-      } else if ( args[0]->IsObject() ) {
-        Local<Object> options = args[0].As<Object>();
-        if ( options->Has(NanNew(noiseSym)) ) {
-          if ( options->Has(NanNew(channelSym)) ) {
-            noisejob.Setup( new NanUtf8String(options->Get(NanNew(noiseSym))),
-                            new NanUtf8String(options->Get(NanNew(channelSym))) );
-          } else {
-            noisejob.Setup( new NanUtf8String(options->Get(NanNew(noiseSym))) );
-          }
+    try {
+      if ( argc == 1 ) {
+        if ( args[0]->IsString() ) {
+          noisejob.Setup( new NanUtf8String(args[0]) );
+        } else if ( args[0]->IsObject() ) {
+          noisejob.Setup( args[0].As<Object>() );
         }
+      } else if ( argc == 2 ) {
+        if ( args[0]->IsString() && args[1]->IsString() )
+          noisejob.Setup( new NanUtf8String(args[0]), new NanUtf8String(args[1]) );
       }
-    } else if ( argc == 2 ) {
-      if ( args[0]->IsString() && args[1]->IsString() )
-        noisejob.Setup( new NanUtf8String(args[0]), new NanUtf8String(args[1]) );
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
     }
 
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageNoiseJob, noisejob, "noise()'s arguments should be strings");
@@ -1299,33 +1284,18 @@ namespace NodeMagick {
   NAN_METHOD(Image::Properties) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImagePropertiesJob, propjob)
 
-    if ( argc == 0 ) {
-      propjob.Setup(true);
-    } else if ( argc == 1 ) {
-      if ( ! args[0]->IsUndefined() && args[0]->IsObject() ) {
-        Local<Object> properties( args[0].As<Object>() );
-        propjob.Setup(false);
-        if ( properties->Has( NanNew(batchSym) ) )
-          propjob.batch = properties->Get(NanNew(batchSym))->BooleanValue() ? 1 : 0;
-        if ( properties->Has( NanNew(autoCloseSym) ) )
-          propjob.autoClose = properties->Get(NanNew(autoCloseSym))->BooleanValue() ? 1 : 0;
-        if ( properties->Has( NanNew(autoCopySym) ) )
-          propjob.autoCopy = properties->Get(NanNew(autoCopySym))->BooleanValue() ? 1 : 0;
-        if ( properties->Has( NanNew(magickSym) ) )
-          propjob.magick.reset( new NanUtf8String( properties->Get(NanNew(magickSym)) ) );
-        if ( properties->Has( NanNew(columnsSym) ) )
-          propjob.columns = properties->Get(NanNew(columnsSym))->Uint32Value();
-        if ( properties->Has( NanNew(rowsSym) ) )
-          propjob.rows = properties->Get(NanNew(rowsSym))->Uint32Value();
-        if ( properties->Has( NanNew(pageSym) ) )
-          propjob.page.reset( new NanUtf8String( properties->Get(NanNew(pageSym)) ) );
-        if ( properties->Has( NanNew(fuzzSym) ) )
-          propjob.fuzz = properties->Get(NanNew(fuzzSym))->NumberValue();
-        if ( properties->Has( NanNew(backgroundSym) ) ) {
-          NODEMAGICK_COLOR_FROM_VALUE( color, properties->Get(NanNew(backgroundSym)) );
-          propjob.background = color;
-        }
+    try {
+      if ( argc == 0 ) {
+        propjob.Setup(true);
+      } else if ( argc == 1 && args[0]->IsObject() ) {
+        propjob.Setup( args[0].As<Object>() );
       }
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
     }
 
     NODEMAGICK_FINISH_IMAGE_WORKER(ImagePropertiesJob, propjob, "properties()'s 1st argument should be an Object");
@@ -1365,150 +1335,35 @@ namespace NodeMagick {
   NAN_METHOD(Image::Quantize) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageQuantizeJob, quantizer)
 
-    ssize_t colors(0);
-    char dither (-1);
-    NanUtf8String *colorSpace(NULL);
-    if ( argc == 1 && args[0]->IsObject() ) {
-      Local<Object> options = args[0].As<Object>();
-      if ( options->Has(NanNew(colorsSym)) )
-        colors = (ssize_t) options->Get(NanNew(colorsSym))->IntegerValue();
-      if ( options->Has(NanNew(colorspaceSym)) )
-        colorSpace = new NanUtf8String(options->Get(NanNew(colorspaceSym)));
-      if ( options->Has(NanNew(ditherSym)) )
-        dither = options->Get(NanNew(ditherSym))->BooleanValue() ? 1 : 0;
-    } else if ( argc <= 3 ) {
-      for( uint32_t i = 0; i < argc; ++i ) {
-        if ( args[i]->IsString() ) {
-          colorSpace = new NanUtf8String(args[i]);
-        } else if (args[i]->IsBoolean() ) {
-          dither = args[i]->BooleanValue() ? 1 : 0;
-        } else {
-          colors = (ssize_t) args[i]->IntegerValue();
+    try {
+      if ( argc == 1 && args[0]->IsObject() ) {
+        quantizer.Setup( args[0].As<Object>() );
+      } else if ( argc <= 3 ) {
+        ssize_t colors(0);
+        char dither (-1);
+        NanUtf8String *colorSpace(NULL);
+        for( uint32_t i = 0; i < argc; ++i ) {
+          if ( args[i]->IsString() ) {
+            colorSpace = new NanUtf8String(args[i]);
+          } else if (args[i]->IsBoolean() ) {
+            dither = args[i]->BooleanValue() ? 1 : 0;
+          } else {
+            colors = (ssize_t) args[i]->IntegerValue();
+          }
         }
+        if ( colors < 0 )
+          return NanThrowTypeError("number of colors should be > 0");
+        quantizer.Setup( (size_t)colors, colorSpace, dither );
       }
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
     }
-    if ( colors < 0 )
-      return NanThrowError("number of colors should be > 0");
-    quantizer.Setup( (size_t)colors, colorSpace, dither );
 
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageQuantizeJob, quantizer, "quantize()'s arguments should be number, string or boolean");
-  }
-
-  /**
-   * Restore image
-   *
-   * image.restore([callback(err, image)])
-   **/
-  NAN_METHOD(Image::Restore) {
-    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageRestoreJob, restore)
-
-    if (argc == 0) {
-      restore.Setup();
-    }
-
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageRestoreJob, restore, "restore()'s 1st argument should be callback");
-  }
-
-  /**
-   * Rotate image
-   *
-   * image.rotate(degrees[, callback(err, image)])
-   *
-   * degrees: a number 0 - 360
-   **/
-  NAN_METHOD(Image::Rotate) {
-    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageRotateJob, rotator)
-
-    if ( argc == 1 ) {
-      if ( args[0]->IsNumber() ) {
-        rotator.Setup( args[0]->NumberValue() );
-      }
-    }
-
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageRotateJob, rotator, "rotate()'s arguments should be a number");
-  }
-
-  /**
-   * Sharpen image
-   *
-   * image.sharpen(sigma[, radius][, channel][, callback(err, image)])
-   * image.sharpen(options[, callback(err, image)])
-   *
-   * options:
-   *
-   *   - sigma: standard deviation of the Laplacian
-   *   - radius: the radius of the Gaussian, in pixels
-   *   - channel: channel type string, e.g.: "blue"
-   *
-   **/
-  NAN_METHOD(Image::Sharpen) {
-    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageSharpenJob, sharpener)
-
-    double sigma(0.0);
-    double radius(0.0);
-    NanUtf8String *channel(NULL);
-    if ( argc == 1 && args[0]->IsObject() ) {
-      Local<Object> options = args[0].As<Object>();
-      if ( options->Has(NanNew(sigmaSym)) )
-        sigma = options->Get(NanNew(sigmaSym))->NumberValue();
-      if ( options->Has(NanNew(radiusSym)) )
-        radius = options->Get(NanNew(radiusSym))->NumberValue();
-      if ( options->Has(NanNew(channelSym)) )
-        channel = new NanUtf8String( options->Get(NanNew(channelSym)) );
-      sharpener.Setup(sigma, radius, channel);
-    } else if ( argc >= 1 && argc <= 3 ) {
-      sigma = args[0]->NumberValue();
-      for( uint32_t i = 1; i < argc; ++i ) {
-        if ( args[i]->IsString() ) {
-          channel = new NanUtf8String(args[i]);
-        } else {
-          radius = args[i]->NumberValue();
-        }
-      }
-      sharpener.Setup(sigma, radius, channel);
-    }
-
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageSharpenJob, sharpener, "sharpen()'s arguments should be should number(s)[, string]");
-  }
-
-  /**
-   * Size get or set
-   *
-   * in synchronous context:
-   * image.size() -> size
-   * image.size(size)
-   * image.size(width, height)
-   *
-   * in asynchronous context:
-   * image.size(callback(err, size))
-   * image.size(size, callback(err, image))
-   * image.size(width, height, callback(err, image))
-   *
-   * size: an Array of [width, height]
-   **/
-  NAN_METHOD(Image::Size) {
-    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageSizeJob, sizer)
-
-    if ( argc == 0 ) {
-
-      sizer.Setup();
-
-    } else if ( argc == 2 ) {
-      if ( args[0]->IsUint32() && args[1]->IsUint32() ) {
-        Magick::Geometry geometry( args[0]->Uint32Value(), args[1]->Uint32Value() );
-        sizer.Setup(geometry);
-      }
-    } else if ( argc == 1 ) {
-      if ( args[0]->IsArray() ) {
-        Magick::Geometry geometry;
-        Local<Array> size( args[0].As<Array>() );
-        if ( SetGeometryFromV8Array( geometry, size) ) {
-          sizer.Setup(geometry);
-        }
-      }
-    }
-
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageSizeJob, sizer, "size()'s arguments should be an Array(2) or 2 Numbers");
   }
 
   /**
@@ -1575,64 +1430,6 @@ namespace NodeMagick {
     NODEMAGICK_FINISH_IMAGE_WORKER(ImageResetJob, resetter, "reset()'s arguments should be string, number(s) or callback");
   }
 
-  const char * const  Image::ResizeTags[] = {
-    "#" , "aspectfit" ,
-    "^" , "aspectfill",
-    "!" , "noaspect"  , "fill"         ,
-    ">" , "larger"    , "greater"      ,
-    "!>", "nolarger"  , "nogreater"    ,
-    "<" , "smaller"   , "less"         ,
-    "!<", "nosmaller" , "noless"       ,
-    "%" , "percent"   ,
-    "!%", "nopercent" ,
-    "@" , "limit"     , "limitpixels"  ,
-    "!@", "nolimit"   , "nolimitpixels",
-          "filter"    ,
-          "sample"    ,
-          "scale"     ,
-    NULL
-  };
-
-  const char Image::ResizeTagValues[] = {
-    '#', '#',
-    '^', '^',
-    '!', '!', '!',
-    '>', '>', '>',
-    '-', '-', '-',
-    '<', '<', '<',
-    '+', '+', '+',
-    '%', '%',
-    '=', '=',
-    '@', '@', '@',
-    '$', '$', '$',
-    'f',
-    'm',
-    'c'
-  };
-
-  static NAN_INLINE void ReadResizeMode(char *mode, Magick::Geometry &geometry, ResizeType &resizeType) {
-    int tag = FindTag(Image::ResizeTags, mode);
-    while ( tag >= 0) {
-      switch(Image::ResizeTagValues[tag]) {
-        case '#': geometry.fillArea(false); geometry.aspect(false); break;
-        case '^': geometry.fillArea(true); geometry.aspect(false);  break;
-        case '!': geometry.aspect(true);                            break;
-        case '>': geometry.greater(true); geometry.less(false);     break;
-        case '-': geometry.greater(false);                          break;
-        case '<': geometry.less(true); geometry.greater(false);     break;
-        case '+': geometry.less(false);                             break;
-        case '%': geometry.percent(true);                           break;
-        case '=': geometry.percent(false);                          break;
-        case '@': geometry.limitPixels(true);                       break;
-        case '$': geometry.limitPixels(false);                      break;
-        case 'f': resizeType = ResizeFilter;                        break;
-        case 'm': resizeType = ResizeSample;                        break;
-        case 'c': resizeType = ResizeScale;                         break;
-      }
-      tag = FindNextTag(Image::ResizeTags);
-    }
-  }
-
   /**
    * Resize image
    *
@@ -1659,7 +1456,7 @@ namespace NodeMagick {
    *   - "scale"                     Use simple ratio algorithm (ignore filters)
    *
    * mode tags can be combined (separated by space, comma or (semi)colon),
-  *       e.g.: "scale aspectfill smaller"
+   *      e.g.: "scale aspectfill smaller"
    *
    * options:
    *
@@ -1671,60 +1468,172 @@ namespace NodeMagick {
   NAN_METHOD(Image::Resize) {
     NODEMAGICK_BEGIN_IMAGE_WORKER(ImageResizeJob, resizer)
 
-    if ( argc >= 1 && argc <= 3 ) {
-      ResizeType resizeType( ResizeFilter );
-      int modeargindex = -1;
-      if ( argc >= 2 ) {
-        if ( args[argc - 1]->IsString() )
-          modeargindex = --argc;
-      }
-      if ( argc == 2 ) {
-        if ( args[0]->IsNumber() && args[1]->IsNumber() ) {
-          Magick::Geometry geometry( args[0]->Uint32Value(), args[1]->Uint32Value() );
-          if ( modeargindex == 2 ) {
-            ReadResizeMode( *NanUtf8String( args[2] ), geometry, resizeType);
-          }
-          resizer.Setup( geometry, resizeType );
+    try {
+      if ( argc >= 1 && argc <= 3 ) {
+        int modeargindex = -1;
+        if ( argc >= 2 ) {
+          if ( args[argc - 1]->IsString() )
+            modeargindex = --argc;
         }
-      } else if ( argc == 1 ) {
-        if ( args[0]->IsString() ) {
-          Magick::Geometry geometry(*NanUtf8String(args[0]));
-          if ( modeargindex == 1 ) {
-            ReadResizeMode( *NanUtf8String( args[1] ), geometry, resizeType);
+        if ( argc == 2 ) {
+          if ( args[0]->IsNumber() && args[1]->IsNumber() ) {
+            Magick::Geometry geometry( args[0]->Uint32Value(), args[1]->Uint32Value() );
+            if ( modeargindex == 2 ) {
+              resizer.Setup( geometry, *NanUtf8String( args[2] ) );
+            } else
+              resizer.Setup( geometry );
           }
-          resizer.Setup( geometry, resizeType );
-        } else if ( args[0]->IsArray() ) {
-          Magick::Geometry geometry;
-          Local<Array> size( args[0].As<Array>() );
-          if ( SetGeometryFromV8Array( geometry, size ) ) {
-            if ( modeargindex == 1 ) {
-              ReadResizeMode( *NanUtf8String( args[1] ), geometry, resizeType);
+        } else if ( argc == 1 ) {
+          if ( args[0]->IsString() ) {
+            Magick::Geometry geometry(*NanUtf8String(args[0]));
+            if ( geometry.isValid() ) {
+              if ( modeargindex == 1 ) {
+                resizer.Setup( geometry, *NanUtf8String( args[1] ) );
+              } else
+                resizer.Setup( geometry );
             }
-            resizer.Setup( geometry, resizeType );
-          }
-        } else if ( args[0]->IsObject() ) {
-          Local<Object> options = args[0].As<Object>();
-          Magick::Geometry geometry;
-          if ( options->Has(NanNew(sizeSym)) ) {
-            Local<Value> size = options->Get(NanNew(sizeSym));
-            if ( size->IsArray() ) {
-              SetGeometryFromV8Array( geometry, size.As<Array>() );
-            } else if ( size->IsString() ) {
-              geometry = *NanUtf8String( size );
+          } else if ( args[0]->IsArray() ) {
+            Magick::Geometry geometry;
+            Local<Array> size( args[0].As<Array>() );
+            if ( SetGeometryFromV8Array( geometry, size ) ) {
+              if ( modeargindex == 1 ) {
+                resizer.Setup( geometry, *NanUtf8String( args[1] ) );
+              } else
+                resizer.Setup( geometry );
             }
-          } else if ( options->Has(NanNew(widthSym)) && options->Has(NanNew(heightSym)) ) {
-            geometry.width( options->Get(NanNew(widthSym))->Uint32Value() );
-            geometry.height( options->Get(NanNew(heightSym))->Uint32Value() );
+          } else if ( args[0]->IsObject() ) {
+            resizer.Setup( args[0].As<Object>() );
           }
-          if ( options->Has(NanNew(modeSym)) )
-            ReadResizeMode( *NanUtf8String( options->Get(NanNew(modeSym)) ), geometry, resizeType);
-          if ( geometry.isValid() )
-            resizer.Setup( geometry, resizeType );
+        }
+      }
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageResizeJob, resizer, "resize()'s arguments should be string or numbers");
+  }
+
+  /**
+   * Restore image
+   *
+   * image.restore([callback(err, image)])
+   **/
+  NAN_METHOD(Image::Restore) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageRestoreJob, restore)
+
+    if (argc == 0) {
+      restore.Setup();
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageRestoreJob, restore, "restore()'s 1st argument should be callback");
+  }
+
+  /**
+   * Rotate image
+   *
+   * image.rotate(degrees[, callback(err, image)])
+   *
+   * degrees: a number 0 - 360
+   **/
+  NAN_METHOD(Image::Rotate) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageRotateJob, rotator)
+
+    if ( argc == 1 ) {
+      if ( args[0]->IsNumber() ) {
+        rotator.Setup( args[0]->NumberValue() );
+      }
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageRotateJob, rotator, "rotate()'s arguments should be a number");
+  }
+
+  /**
+   * Sharpen image
+   *
+   * image.sharpen(sigma[, radius][, channel][, callback(err, image)])
+   * image.sharpen(options[, callback(err, image)])
+   *
+   * options:
+   *
+   *   - sigma: standard deviation of the Laplacian
+   *   - radius: the radius of the Gaussian, in pixels
+   *   - channel: channel type string, e.g.: "blue"
+   *
+   **/
+  NAN_METHOD(Image::Sharpen) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageSharpenJob, sharpener)
+
+    try {
+      if ( argc == 1 && args[0]->IsObject() ) {
+        sharpener.Setup( args[0].As<Object>() );
+      } else if ( argc >= 1 && argc <= 3 ) {
+        double sigma( args[0]->NumberValue() );
+        double radius(0.0);
+        NanUtf8String *channel(NULL);
+        for( uint32_t i = 1; i < argc; ++i ) {
+          if ( args[i]->IsString() ) {
+            channel = new NanUtf8String(args[i]);
+          } else {
+            radius = args[i]->NumberValue();
+          }
+        }
+        if ( isnan(sigma) )
+          throw ImageOptionsException("sharpen()'s sigma is not a number");
+        sharpener.Setup(sigma, radius, channel);
+      }
+    } catch (ImageOptionsException& err) {
+        return NanThrowTypeError(err.what());
+    } catch (exception& err) {
+        return NanThrowError(err.what());
+    } catch (...) {
+        return NanThrowError("unhandled error");
+    }
+
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageSharpenJob, sharpener, "sharpen()'s arguments should be number(s)[, string]");
+  }
+
+  /**
+   * Size get or set
+   *
+   * in synchronous context:
+   * image.size() -> size
+   * image.size(size)
+   * image.size(width, height)
+   *
+   * in asynchronous context:
+   * image.size(callback(err, size))
+   * image.size(size, callback(err, image))
+   * image.size(width, height, callback(err, image))
+   *
+   * size: an Array of [width, height]
+   **/
+  NAN_METHOD(Image::Size) {
+    NODEMAGICK_BEGIN_IMAGE_WORKER(ImageSizeJob, sizer)
+
+    if ( argc == 0 ) {
+
+      sizer.Setup();
+
+    } else if ( argc == 2 ) {
+      if ( args[0]->IsUint32() && args[1]->IsUint32() ) {
+        Magick::Geometry geometry( args[0]->Uint32Value(), args[1]->Uint32Value() );
+        sizer.Setup(geometry);
+      }
+    } else if ( argc == 1 ) {
+      if ( args[0]->IsArray() ) {
+        Magick::Geometry geometry;
+        Local<Array> size( args[0].As<Array>() );
+        if ( SetGeometryFromV8Array( geometry, size) ) {
+          sizer.Setup(geometry);
         }
       }
     }
 
-    NODEMAGICK_FINISH_IMAGE_WORKER(ImageResizeJob, resizer, "resize()'s arguments should be string, numbers or callback");
+    NODEMAGICK_FINISH_IMAGE_WORKER(ImageSizeJob, sizer, "size()'s arguments should be an Array(2) or 2 Numbers");
   }
 
   /**
