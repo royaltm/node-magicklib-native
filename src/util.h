@@ -28,11 +28,11 @@ namespace NodeMagick {
     return ObjectWrap::Unwrap<Color>( object )->magickcolor;
   }
 
-  static NAN_INLINE bool SetColorFromV8Value(Magick::Color &color, Handle<Value> value, const char **errmsg) {
+  static NAN_INLINE bool SetColorFromV8Value(Magick::Color &color, const Handle<Value> &value, const char **errmsg) {
     if ( value->IsString() ) {
       return SetColorFromString(color, *NanUtf8String( value ), errmsg);
     } else if ( NODEMAGICK_VALUE_IS_COLOR(value) ) {
-      color = GetColorFromV8ColorObject( value.As<Object>() );
+      color = GetColorFromV8ColorObject( value->ToObject() );
       return true;
     }
     if ( errmsg != NULL ) *errmsg = "can't deduce color from value";
@@ -62,24 +62,16 @@ namespace NodeMagick {
       return Magick::ForgetGravity;
   }
 
-  static NAN_INLINE bool SetGeometryFromV8Array(Magick::Geometry &geometry, const Local<Array> &size) {
+  static NAN_INLINE bool SetGeometryFromV8Array(Magick::Geometry &geometry, const Handle<Array> &size) {
     NanScope();
     if ( size->Length() >= 2 ) {
-      Local<Value> cols( size->Get(0) );
-      Local<Value> rows( size->Get(1) );
-      if ( cols->IsUint32() && rows->IsUint32() ) {
-        geometry.width( cols->Uint32Value() );
-        geometry.height( rows->Uint32Value() );
-        if ( size->Length() >= 4 ) {
-          Local<Value> xoff( size->Get(2) );
-          Local<Value> yoff( size->Get(3) );
-          if ( xoff->IsInt32() && yoff->IsInt32() ) {
-            geometry.xOff( xoff->Int32Value() );
-            geometry.yOff( yoff->Int32Value() );
-          }
-        }
-        return true;
+      geometry.width( size->Get(0)->Uint32Value() );
+      geometry.height( size->Get(1)->Uint32Value() );
+      if ( size->Length() >= 4 ) {
+        geometry.xOff( size->Get(2)->Int32Value() );
+        geometry.yOff( size->Get(3)->Int32Value() );
       }
+      return true;
     }
     return false;
   }
