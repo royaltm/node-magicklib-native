@@ -113,7 +113,7 @@ namespace NodeMagick {
       ImageMutualProcessJob(ImageMutualKit &kit);
       virtual ~ImageMutualProcessJob(void);
       void Setup(Image *source_);
-      void SetSynchronizeJob(ImageSynchronizeJob &job_);
+      ImageSynchronizeJob *SetupSynchronizeJob(ImageSynchronizeJob *job_=NULL);
       void ProcessImage(Image *image);
       virtual void ProcessImagesSynchronized(Image *image, Image *source);
     private:

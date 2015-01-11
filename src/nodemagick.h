@@ -105,7 +105,18 @@ namespace NodeMagick {
   };
 
 
+  template<class T>
+  NAN_INLINE Local<Object> UnwrapCheck(const Handle<Value> &value, T **source) {
+    Local<Object> sourceObject;
+    if ( NanHasInstance(T::constructor, value) ) {
+      sourceObject = value->ToObject();
+      *source = ObjectWrap::Unwrap<T>(sourceObject);
+    }
+    return sourceObject;
+  }
+
 }
+
 
 #define NODEMAGICK_TRY_IGNORE_WARNING(expression) \
   try {                                           \

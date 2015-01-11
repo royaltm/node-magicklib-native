@@ -1,7 +1,7 @@
 #include "image.h"
 #include <string.h>
 #include <cstring>
-
+#include "util.h"
 
 #define NODEMAGICK_SCOPE_IMAGE_UNWRAP() \
   NODEMAGICK_SCOPE_UNWRAP(Image, image)
@@ -59,14 +59,8 @@
   Image *source(NULL);                                \
   NODEMAGICK_CHECK_ASYNC_ARGS
 
-#define NODEMAGICK_UNWRAP_IMAGE_SOURCE(value)           \
-  do {                                                  \
-    Local<Value> _value(value);                         \
-    if ( NanHasInstance(Image::constructor, _value) ) { \
-      sourceObject = _value.As<Object>();               \
-      source = ObjectWrap::Unwrap<Image>(sourceObject); \
-    }                                                   \
-  } while(0)
+#define NODEMAGICK_UNWRAP_IMAGE_SOURCE(value) \
+  do { sourceObject = UnwrapCheck<Image>(value, &source); } while(0)
 
 #define NODEMAGICK_IMAGE_SOURCE_UNWRAPPED() \
   ( ! sourceObject.IsEmpty() )
@@ -76,21 +70,19 @@
     if ( ! job.IsValid() ) {                                         \
       return NanThrowTypeError(errorstring);                         \
     } else if ( sourceObject.IsEmpty() ) {                           \
-      return NanThrowTypeError("missing Image");                     \
+      return NanThrowError("required Image argument is missing");    \
     } else {                                                         \
       if ( callback || image->IsBatch() ) {                          \
-        JobKlass *_job = new JobKlass(job);                          \
-        ImageSynchronizeJob *_syncjob =                              \
-                                   new ImageSynchronizeJob(*source); \
-        _syncjob->Setup(*_job);                                      \
-        _job->SetSynchronizeJob(*_syncjob);                          \
+        JobKlass *_ ## job = new JobKlass(job);                      \
+        ImageSynchronizeJob *_sync ## job =                          \
+                                 _ ## job->SetupSynchronizeJob();    \
         if ( callback ) {                                            \
           image->AsyncWork( args.This(),NODEMAGICK_ASYNC_CALLBACK(), \
-                            _job );                                  \
+                            _ ## job );                              \
         } else {                                                     \
-          image->BatchPush( _job );                                  \
+          image->BatchPush( _ ## job );                              \
         }                                                            \
-        source->AsyncWork( sourceObject, _syncjob );                 \
+        source->AsyncWork( sourceObject, _sync ## job );             \
       } else {                                                       \
         NanReturnValue( image->SyncProcess( job, args.This() ) );    \
       }                                                              \

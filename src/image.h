@@ -5,7 +5,6 @@
 #include "color.h"
 #include "imageprocessor.h"
 #include "worker.h"
-#include "util.h"
 
 using namespace node;
 using namespace v8;
