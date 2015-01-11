@@ -33,8 +33,7 @@ function testComposition(t, im, src, x, y) {
 }
 
 test("image.composite", function (t) {
-  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", background: "transparent", magick: "PNG"}).
-                type("truecolor")
+  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", type: "truecolor", magick: "PNG"})
 
   t.plan(6 + 20*2*(3 + 10) + 8*2*(3 + 10))
 
@@ -109,8 +108,7 @@ test("image.composite", function (t) {
 })
 
 test("mutual synchronization async read", function (t) {
-  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", background: "transparent", magick: "PNG"}).
-                type("truecolor")
+  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", type: "truecolor", magick: "PNG"})
   var src = new Image()
   t.plan(4 + (4 + 4) + (3 + 2 + 10))
   src.begin().read(blobImage).resize(120,160,"fill")
@@ -144,8 +142,7 @@ test("mutual synchronization async read", function (t) {
 })
 
 test("mutual synchronization hold and finish", function (t) {
-  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", background: "transparent", magick: "PNG"}).
-                type("truecolor")
+  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", type: "truecolor", magick: "PNG"})
   var src = new Image()
   t.plan(4 + (4 + 4) + (3 + 2 + 10))
   src._hold()
@@ -181,8 +178,7 @@ test("mutual synchronization hold and finish", function (t) {
 })
 
 test("mutual synchronization hold and error", function (t) {
-  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", background: "transparent", magick: "PNG"}).
-                type("truecolor")
+  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", type: "truecolor", magick: "PNG"})
   var src = new Image()
   t.plan(4 + (3 + 4) + (3 + 2))
   src._hold()
@@ -216,8 +212,7 @@ test("mutual synchronization hold and error", function (t) {
 })
 
 test("mutual synchronization hold and error 2", function (t) {
-  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", background: "transparent", magick: "PNG"}).
-                type("truecolor")
+  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", type: "truecolor", magick: "PNG"})
   var src = new Image()
   t.plan(4 + (3 + 6))
   src._hold()
@@ -244,8 +239,7 @@ test("mutual synchronization hold and error 2", function (t) {
 })
 
 test("mutual synchronization error", function (t) {
-  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", background: "transparent", magick: "PNG"}).
-                type("truecolor")
+  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", type: "truecolor", magick: "PNG"})
   var src = new Image()
   t.plan(5 + (3 + 6))
   src.begin().read(new Buffer(0)).resize(120,160,"fill")
@@ -271,8 +265,7 @@ test("mutual synchronization error", function (t) {
 })
 
 test("mutual synchronization premature end", function (t) {
-  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", background: "transparent", magick: "PNG"}).
-                type("truecolor")
+  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", type: "truecolor", magick: "PNG"})
   var src = new Image()
   t.plan(4 + (4 + 4) + 2)
   src.begin().read(blobImage).resize(120,160,"fill")
@@ -300,8 +293,7 @@ test("mutual synchronization premature end", function (t) {
 })
 
 test("mutual synchronization hold premature end", function (t) {
-  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", background: "transparent", magick: "PNG"}).
-                type("truecolor")
+  var im = new Image({autoClose: false, autoCopy: true, columns: 300, rows: 300, color: "transparent", type: "truecolor", magick: "PNG"})
   var src = new Image()
   t.plan(4 + (4 + 4) + 2)
   src._hold()

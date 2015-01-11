@@ -55,6 +55,7 @@ namespace NodeMagick {
   extern Persistent<String> imageSym;
   extern Persistent<String> composeSym;
   extern Persistent<String> geometrySym;
+  extern Persistent<String> typeSym;
 
   //extern Persistent<Function> bufferFunction;
 

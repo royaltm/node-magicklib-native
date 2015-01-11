@@ -60,7 +60,7 @@ test("Not empty Image factory from properties", function (t) {
 
 test("Image with size and color factory", function (t) {
 
-  function test(t, im, color) {
+  function test(t, type, im, color) {
     t.type(im, Image, "is instance of Image")
     t.strictEqual(im.busy     , false, "busy is false")
     t.strictEqual(im.empty    , false, "empty is false")
@@ -79,24 +79,26 @@ test("Image with size and color factory", function (t) {
     t.deepEqual(colors[0].rgba(255), color , "is color")
     t.deepEqual(colors[1].rgba(255), color , "is color")
     t.deepEqual(colors[2].rgba(255), color , "is color")
+    t.strictEqual(im.type(), type)
+    t.deepEqual(im.background.rgba(255) , color)
   }
 
-  t.plan(9*17)
-  test(t, new Image(640, 512)             , [0, 0, 0, 255])
-  test(t, new Image(640, 512, "#FF880044"), [255, 136, 0, 187])
-  test(t, new Image(640, 512, "black"), [0, 0, 0, 0])
-  test(t, new Image(640, 512, "white"), [255, 255, 255, 0])
-  test(t, new Image(640, 512, Color.RGB(1,128/255,16/255)), [255, 128, 16, 0])
-  test(t, new Image("640x512", "#FF880044"), [255, 136, 0, 187])
-  test(t, new Image("640x512", "black"), [0, 0, 0, 0])
-  test(t, new Image("640x512", "white"), [255, 255, 255, 0])
-  test(t, new Image("640x512", Color.RGB(1,128/255,16/255)), [255, 128, 16, 0])
+  t.plan(9*19)
+  test(t, "Bilevel",      new Image(640, 512)             , [0, 0, 0, 255])
+  test(t, "PaletteAlpha", new Image(640, 512, "#FF880044"), [255, 136, 0, 187])
+  test(t, "Bilevel",      new Image(640, 512, "black"), [0, 0, 0, 0])
+  test(t, "Bilevel",      new Image(640, 512, "white"), [255, 255, 255, 0])
+  test(t, "Palette",      new Image(640, 512, Color.RGB(1,128/255,16/255)), [255, 128, 16, 0])
+  test(t, "PaletteAlpha", new Image("640x512", "#FF880044"), [255, 136, 0, 187])
+  test(t, "Bilevel",      new Image("640x512", "black"), [0, 0, 0, 0])
+  test(t, "Bilevel",      new Image("640x512", "white"), [255, 255, 255, 0])
+  test(t, "Palette",      new Image("640x512", Color.RGB(1,128/255,16/255)), [255, 128, 16, 0])
 
 })
 
 test("Image with size and color factory from properties", function (t) {
 
-  function test(t, im, color) {
+  function test(t, im, type, color, bgcolor) {
     t.type(im, Image, "is instance of Image")
     t.strictEqual(im.busy     , false, "busy is false")
     t.strictEqual(im.empty    , false, "empty is false")
@@ -120,24 +122,41 @@ test("Image with size and color factory from properties", function (t) {
     t.deepEqual(colors[0].rgba(255), color , "is color")
     t.deepEqual(colors[1].rgba(255), color , "is color")
     t.deepEqual(colors[2].rgba(255), color , "is color")
+    t.strictEqual(im.type(), type)
+    t.deepEqual(im.background.rgba(255) , bgcolor || color)
   }
 
-  t.plan(5*20)
+  t.plan(10*22)
   test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
     page: "A4", magick: "JPEG"}),
-                                       [0, 0, 0, 255])
+                            "Bilevel", [0, 0, 0, 255])
+  test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
+    page: "A4", magick: "JPEG", type: "truecolor"}),
+                            "TrueColor", [0, 0, 0, 255])
   test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
     page: "A4", magick: "JPEG", color: "#FF880044"}),
-                                       [255, 136, 0, 187])
+                       "PaletteAlpha", [255, 136, 0, 187])
+  test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
+    page: "A4", magick: "JPEG", color: "#FF880044", type: "truecolor"}),
+                          "TrueColor", [255, 136, 0, 187])
   test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
     page: "A4", magick: "JPEG", color: "black"}),
-                                       [0, 0, 0, 0])
+                           "Bilevel",  [0, 0, 0, 0])
+  test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
+    page: "A4", magick: "JPEG", color: "black", type: "grayscale"}),
+                         "Grayscale",  [0, 0, 0, 0])
   test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
     page: "A4", magick: "JPEG", color: "white"}),
-                                       [255, 255, 255, 0])
+                            "Bilevel", [255, 255, 255, 0])
   test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
-    page: "A4", magick: "JPEG", color: Color.RGB(1,128/255,16/255)}),
-                                       [255, 128, 16, 0])
+    page: "A4", magick: "JPEG", color: "white", background: "black"}),
+                            "Bilevel", [255, 255, 255, 0], [0, 0, 0, 0])
+  test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
+    page: "A4", magick: "JPEG", color: Color.RGB(1,128/255,16/255), background: "transparent"}),
+                            "Palette", [255, 128, 16, 0], [0, 0, 0, 255])
+  test(t, new Image({columns: 640, rows: 512, autoCopy: true, batch: true, autoClose: false,
+    page: "A4", magick: "JPEG", color: Color.RGB(1,128/255,16/255), background: "white", type: "truecolor"}),
+                          "TrueColor", [255, 128, 16, 0], [255, 255, 255, 0])
 })
 
 test("Image from file factory", function (t) {

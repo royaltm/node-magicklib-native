@@ -349,6 +349,7 @@ namespace NodeMagick {
    *   - autoCopy:   set auto copy mode, default: false
    *   - background: set background color, default: color
    *   - fuzz:       set color fuzz, default: 0
+   *   - type:       set image type, e.g. "truecolor"
    **/
   NAN_METHOD(Image::New) {
     NODEMAGICK_SCOPE_ARGC();
@@ -461,6 +462,15 @@ namespace NodeMagick {
               }
               if ( properties->Has(NanNew(fuzzSym)) )
                 image->GetMagickImage()->colorFuzz( properties->Get(NanNew(fuzzSym))->NumberValue() );
+              if ( properties->Has(NanNew(typeSym)) ) {
+                ssize_t type = MagickCore::ParseCommandOption(MagickCore::MagickTypeOptions, Magick::MagickFalse,
+                                *NanUtf8String(properties->Get(NanNew(typeSym))));
+                if ( type != -1 ) {
+                  image->GetMagickImage()->type( (Magick::ImageType) type );
+                } else {
+                  throw ImageTypeException();
+                }
+              }
             }
           } else {
             image = new Image();
