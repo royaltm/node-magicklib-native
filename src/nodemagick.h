@@ -6,6 +6,8 @@
 */
 
 #ifdef _MSC_VER
+#  include <float.h>
+#  define isnan _isnan
 #  define strncasecmp _strnicmp
 #  define strcasecmp _stricmp
 #  define snprintf _snprintf

@@ -6,11 +6,6 @@
 #  include <map>
 #endif
 
-#ifdef _MSC_VER
-#  include <float.h>
-#  define isnan _isnan
-#endif
-
 using namespace node;
 using namespace v8;
 
