@@ -591,7 +591,7 @@ namespace NodeMagick {
    *
    * options:
    *
-   *   - image: a compose image to compose onto image
+   *   - image: an image to compose onto image
    *   - gravity: gravity string, e.g: "southwest"
    *   - geometry: geometry [_, _, x, y] or string, e.g: "+100-50"
    *   - x: x offset

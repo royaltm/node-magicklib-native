@@ -61,17 +61,18 @@ It's better to use streams, or blobs.
  
   options:
  
-    - src:       image data Buffer
-    - columns:   number of columns (width)
-    - rows:      number of rows (height)
-    - color:     new image color string or Color object, default: transparent
-    - magick:    set format, default: Magick++ default
-    - page:      page description string
-    - batch:     set persistent batch mode, default: false
-    - autoClose: set auto close mode, default: true
-    - autoCopy:  set auto copy mode, default: false
-    - background: set background color, default: unknown
+    - src:        image data Buffer
+    - columns:    number of columns (width)
+    - rows:       number of rows (height)
+    - color:      new image color string or Color object, default: transparent
+    - magick:     set format, default: Magick++ default
+    - page:       page description string
+    - batch:      set persistent batch mode, default: false
+    - autoClose:  set auto close mode, default: true
+    - autoCopy:   set auto copy mode, default: false
+    - background: set background color, default: color
     - fuzz:       set color fuzz, default: 0
+    - type:       set image type, e.g. "truecolor"
 ```
 
 ###Begin batch mode
@@ -104,6 +105,25 @@ It's better to use streams, or blobs.
     - channel: channel type string, e.g.: "yellow"
     - gaussian: true for gaussian blur
  
+```
+
+###Composite images
+
+```js
+ 
+  image.composite(composeImage[, gravity="center"][, compose="over"][callback(err, image)])
+  image.composite(composeImage[, geometry][, compose="over"][callback(err, image)])
+  image.composite(composeImage[, x, y][, compose="over"][callback(err, image)])
+  image.composite(options[, callback(err, image)])
+ 
+  options:
+ 
+    - image: an image to compose onto image
+    - gravity: gravity string, e.g: "southwest"
+    - geometry: geometry [_, _, x, y] or string, e.g: "+100-50"
+    - x: x offset
+    - y: y offset
+    - compose: compose string, "multiply"
 ```
 
 ###Copy image
