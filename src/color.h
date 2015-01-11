@@ -7,7 +7,7 @@ using namespace node;
 using namespace v8;
 
 #define NODEMAGICK_VALUE_IS_COLOR(value) \
-  ( (value)->IsObject() && NanHasInstance(Color::constructor, (value)) )
+  ( NanHasInstance(Color::constructor, (value)) )
 
 namespace NodeMagick {
 
