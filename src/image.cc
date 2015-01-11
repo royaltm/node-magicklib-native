@@ -200,16 +200,28 @@ namespace NodeMagick {
     , isCloned(false), autoCopy(false), autoClose(true) { uv_mutex_init(&imagemutex); }
   Image::Image(const char *geometry, const char *color)
     : magickimage( new Magick::Image(geometry, color) ), magickcopy(NULL)
-    , isCloned(false), autoCopy(false), autoClose(true) { uv_mutex_init(&imagemutex); }
+    , isCloned(false), autoCopy(false), autoClose(true) {
+    magickimage->backgroundColor( color );
+    uv_mutex_init(&imagemutex);
+  }
   Image::Image(const char *geometry, const Magick::Color &color)
     : magickimage( new Magick::Image(geometry, color) ), magickcopy(NULL)
-    , isCloned(false), autoCopy(false), autoClose(true) { uv_mutex_init(&imagemutex); }
+    , isCloned(false), autoCopy(false), autoClose(true) {
+    magickimage->backgroundColor( color );
+    uv_mutex_init(&imagemutex);
+  }
   Image::Image(size_t width, size_t height, const char *color)
     : magickimage( new Magick::Image(Magick::Geometry(width, height), color) ), magickcopy(NULL)
-    , isCloned(false), autoCopy(false), autoClose(true) { uv_mutex_init(&imagemutex); }
+    , isCloned(false), autoCopy(false), autoClose(true) {
+    magickimage->backgroundColor( color );
+    uv_mutex_init(&imagemutex);
+  }
   Image::Image(size_t width, size_t height, const Magick::Color &color)
     : magickimage( new Magick::Image(Magick::Geometry(width, height), color) ), magickcopy(NULL)
-    , isCloned(false), autoCopy(false), autoClose(true) { uv_mutex_init(&imagemutex); }
+    , isCloned(false), autoCopy(false), autoClose(true) {
+    magickimage->backgroundColor( color );
+    uv_mutex_init(&imagemutex);
+  }
 
   Image::~Image(void) {
     // printf("image dtor\n");
@@ -326,16 +338,16 @@ namespace NodeMagick {
    *
    * options:
    *
-   *   - src:       image data Buffer
-   *   - columns:   number of columns (width)
-   *   - rows:      number of rows (height)
-   *   - color:     new image color string or Color object, default: transparent
-   *   - magick:    set format, default: Magick++ default
-   *   - page:      page description string
-   *   - batch:     set persistent batch mode, default: false
-   *   - autoClose: set auto close mode, default: true
-   *   - autoCopy:  set auto copy mode, default: false
-   *   - background: set background color, default: unknown
+   *   - src:        image data Buffer
+   *   - columns:    number of columns (width)
+   *   - rows:       number of rows (height)
+   *   - color:      new image color string or Color object, default: transparent
+   *   - magick:     set format, default: Magick++ default
+   *   - page:       page description string
+   *   - batch:      set persistent batch mode, default: false
+   *   - autoClose:  set auto close mode, default: true
+   *   - autoCopy:   set auto copy mode, default: false
+   *   - background: set background color, default: color
    *   - fuzz:       set color fuzz, default: 0
    **/
   NAN_METHOD(Image::New) {
@@ -444,8 +456,8 @@ namespace NodeMagick {
               if ( properties->Has(NanNew(pageSym)) )
                 image->GetMagickImage()->page( *NanUtf8String( properties->Get(NanNew(pageSym)) ) );
               if ( properties->Has(NanNew(backgroundSym)) ) {
-                NODEMAGICK_COLOR_FROM_VALUE( color, properties->Get(NanNew(backgroundSym)) );
-                image->GetMagickImage()->backgroundColor( color );
+                NODEMAGICK_COLOR_FROM_VALUE( bgcolor, properties->Get(NanNew(backgroundSym)) );
+                image->GetMagickImage()->backgroundColor( bgcolor );
               }
               if ( properties->Has(NanNew(fuzzSym)) )
                 image->GetMagickImage()->colorFuzz( properties->Get(NanNew(fuzzSym))->NumberValue() );
